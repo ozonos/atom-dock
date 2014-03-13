@@ -7,7 +7,7 @@ install: local
 
 local: 
 	#Create dir if not exist
-	mkdir -p $INSTALLDIR
+	mkdir -p $(INSTALLDIR)
 
 	#Clear dir from contents
 	-rm -rf $(INSTALLDIR)/*
