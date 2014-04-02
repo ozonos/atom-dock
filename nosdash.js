@@ -648,6 +648,10 @@ const NosDash = new Lang.Class({
 			}));
 
 		return true;
+	},
+
+	destroy: function() {
+		// TODO: destroy
 	}
 });
 

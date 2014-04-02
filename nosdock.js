@@ -87,6 +87,12 @@ const NosDock = new Lang.Class({
 		// forcedOverview flag
 		if( this.dash.showAppsButton.checked==false)
 			this.forcedOverview = false;
+	},
+
+	destroy: function() {
+		// TODO: destroy signal
+		this.dash.destroy();
+        this.actor.destroy();
 	}
 
 });
