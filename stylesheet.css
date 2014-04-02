@@ -1,9 +1,13 @@
 
-.helloworld-label {
-    font-size: 36px;
-    font-weight: bold;
-    color: #ffffff;
-    background-color: rgba(10,10,10,0.7);
-    border-radius: 5px;
-    padding: .5em;
+#nos-dash {
+    color: #5f5f5f;
+    font-size: 9pt;
+    padding: 4px 0px;
+    background-color: rgba(10,10,10,0.9);
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    border-bottom: 0px;
+}
+
+.dash-item-container > StButton {
+    padding: 8px 8px;
 }

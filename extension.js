@@ -17,7 +17,7 @@ function init() {
 
 function enable() {
   old_dash.hideDash();
-  nosDock = new NosDock.nosDock();
+  nosDock = new NosDock.NosDock();
 }
 
 function disable() {
