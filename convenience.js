@@ -35,10 +35,11 @@ function initTranslations(domain) {
     // otherwise assume that extension has been installed in the
     // same prefix as gnome-shell
     let localeDir = extension.dir.get_child('locale');
-    if (localeDir.query_exists(null))
+    if (localeDir.query_exists(null)) {
         Gettext.bindtextdomain(domain, localeDir.get_path());
-    else
+    } else {
         Gettext.bindtextdomain(domain, Config.LOCALEDIR);
+    }
 }
 
 /**
@@ -63,17 +64,19 @@ function getSettings(schema) {
     // in the standard folders)
     let schemaDir = extension.dir.get_child('schemas');
     let schemaSource;
-    if (schemaDir.query_exists(null))
+    if (schemaDir.query_exists(null)) {
         schemaSource = GioSSS.new_from_directory(schemaDir.get_path(),
                                                  GioSSS.get_default(),
                                                  false);
-    else
+    } else {
         schemaSource = GioSSS.get_default();
+    }
 
     let schemaObj = schemaSource.lookup(schema, true);
-    if (!schemaObj)
+    if (!schemaObj) {
         throw new Error('Schema ' + schema + ' could not be found for extension '
                         + extension.metadata.uuid + '. Please check your installation.');
+    }
 
     return new Gio.Settings({ settings_schema: schemaObj });
 }
@@ -91,25 +94,28 @@ const GlobalSignalHandler = new Lang.Class({
     },
 
     disconnect: function() {
-        for( let label in this._signals )
+        for (let label in this._signals) {
             this.disconnectWithLabel(label);
+        }
     },
 
-    pushWithLabel: function( label /* plus unlimited 3-long array arguments*/) {
+    pushWithLabel: function(label /* plus unlimited 3-long array arguments*/) {
 
         // skip first element of thearguments array;
         let elements = new Array;
-        for(let i = 1 ; i< arguments.length; i++)
+        for (let i = 1 ; i< arguments.length; i++) {
             elements.push(arguments[i]);
+        }
 
         this._addSignals(label, elements);
     },
 
     _addSignals: function(label, elements) {
-        if(this._signals[label] == undefined)
+        if (this._signals[label] == undefined) {
             this._signals[label] = new Array();
+        }
 
-        for( let i = 0; i < elements.length; i++ ) { 
+        for (let i = 0; i < elements.length; i++) { 
             let object = elements[i][0];
             let event = elements[i][1];
 
@@ -120,8 +126,8 @@ const GlobalSignalHandler = new Lang.Class({
 
     disconnectWithLabel: function(label) {
 
-        if(this._signals[label]) {
-            for( let i = 0; i < this._signals[label].length; i++ ) {
+        if (this._signals[label]) {
+            for (let i = 0; i < this._signals[label].length; i++) {
                 this._signals[label][i][0].disconnect(this._signals[label][i][1]);
             }
 
