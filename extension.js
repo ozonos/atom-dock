@@ -21,6 +21,7 @@
  *  - add settings schema
  *  - implement intellihide
  *  - implement workspace button
+ *  - implement 75% of screen width as maximum dock width instead of 100%
  * 
  */
 
