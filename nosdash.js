@@ -17,11 +17,18 @@ const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
 const Workspace = imports.ui.workspace;
 
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Convenience = Me.imports.convenience;
+
 let DASH_ANIMATION_TIME = Dash.DASH_ANIMATION_TIME;
 let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
+/* This class is a fork of the upstream DashActor class (ui.dash.js).
+ * Heavily inspired from Michele's Dash to Dock extension
+ * https://github.com/micheleg/dash-to-dock
+ */
 const NosDashActor = new Lang.Class({
     Name: 'NosDashActor',
     Extends: St.Widget,
@@ -73,10 +80,16 @@ const NosDashActor = new Lang.Class({
     }
 });
 
+/* This class is a fork of the upstream Dash class (ui.dash.js).
+ * Heavily inspired from Michele's Dash to Dock extension
+ * https://github.com/micheleg/dash-to-dock
+ */
 const NosDash = new Lang.Class({
     Name: 'NosDash',
 
     _init : function() {
+        this._signalHandler = new Convenience.GlobalSignalHandler();
+
         this._maxWidth = -1;
         this.iconSize = 64;
         this._shownInitially = false;
@@ -116,23 +129,48 @@ const NosDash = new Lang.Class({
 
         this._appSystem = Shell.AppSystem.get_default();
 
-        this._appSystem.connect('installed-changed', Lang.bind(this, function() {
-            AppFavorites.getAppFavorites().reload();
-            this._queueRedisplay();
-        }));
-        AppFavorites.getAppFavorites().connect('changed', Lang.bind(this, this._queueRedisplay));
-        this._appSystem.connect('app-state-changed', Lang.bind(this, this._queueRedisplay));
-
-        Main.overview.connect('item-drag-begin',
-                              Lang.bind(this, this._onDragBegin));
-        Main.overview.connect('item-drag-end',
-                              Lang.bind(this, this._onDragEnd));
-        Main.overview.connect('item-drag-cancelled',
-                              Lang.bind(this, this._onDragCancelled));
+        this._signalHandler.push(
+            [
+                this._appSystem,
+                'installed-changed',
+                Lang.bind(this, function() {
+                    AppFavorites.getAppFavorites().reload();
+                    this._queueRedisplay();
+                })
+            ],
+            [
+                AppFavorites.getAppFavorites(),
+                'changed',
+                Lang.bind(this, this._queueRedisplay)
+            ],
+            [
+                this._appSystem,
+                'app-state-changed',
+                Lang.bind(this, this._queueRedisplay)
+            ],
+            [
+                Main.overview,
+                'item-drag-begin',
+                Lang.bind(this, this._onDragBegin)
+            ],
+            [
+                Main.overview,
+                'item-drag-end',
+                Lang.bind(this, this._onDragEnd)
+            ],
+            [
+                Main.overview,
+                'item-drag-cancelled',
+                Lang.bind(this, this._onDragCancelled)
+            ]);
 
         // Translators: this is the name of the dock/favorites area on
         // the left of the overview
         Main.ctrlAltTabManager.addGroup(this.actor, _("Dash"), 'user-bookmarks-symbolic');
+    },
+
+    destroy: function() {
+        this._signalHandler.disconnect();
     },
 
     _onDragBegin: function() {
@@ -650,11 +688,8 @@ const NosDash = new Lang.Class({
             }));
 
         return true;
-    },
-
-    destroy: function() {
-        // TODO: destroy signal
     }
+
 });
 
 Signals.addSignalMethods(NosDash.prototype);

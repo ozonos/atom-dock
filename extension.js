@@ -11,11 +11,16 @@
  *  - convert indentation to spaces, added emacs header line
  * 
  * TODO(s): 
+ *  - on some initialization, icon sizes are not correct
+ *  - fix drag and drop behavior
+ *  - fix icon's tooltip appearance
  *  - fix gdm log message "Source ID <integer> was not found when attempting to remove it"
  *    when hovering and unhovering icon
- *  - fix icon's tooltip appearance
  *  - use different name for NosDash?
  *  - check behavior on multiple monitor
+ *  - add settings schema
+ *  - implement intellihide
+ *  - implement workspace button
  * 
  */
 
@@ -25,14 +30,17 @@ const Tweener = imports.ui.tweener;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
+const Convenience = Me.imports.convenience;
 const GnomeDash = Me.imports.gnomedash;
 const NosDock = Me.imports.nosdock;
 
-let old_dash;
+let oldDash;
 let nosDock;
+let signalHandler;
 
 function init() {
-    old_dash = new GnomeDash.gnomeDash();
+    oldDash = new GnomeDash.gnomeDash();
+    signalHandler = new Convenience.GlobalSignalHandler();
 }
 
 function setDockTransparent() {
@@ -44,13 +52,23 @@ function unsetDockTransparent() {
 }
 
 function enable() {
-    old_dash.hideDash();
+    oldDash.hideDash();
     nosDock = new NosDock.NosDock();
-    Main.overview.connect('showing', setDockTransparent);
-    Main.overview.connect('hiding', unsetDockTransparent);
+    signalHandler.push(
+        [
+            Main.overview,
+            'showing',
+            setDockTransparent
+        ],
+        [
+            Main.overview,
+            'hiding',
+            unsetDockTransparent
+        ]);
 }
 
 function disable() {
-    old_dash.showDash();
+    signalHandler.disconnect();
     nosDock.destroy();
+    oldDash.showDash();
 }

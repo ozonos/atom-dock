@@ -6,20 +6,26 @@ const St = imports.gi.St;
 
 const Main = imports.ui.main;
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Convenience = Me.imports.convenience;
 const NosDash = Me.imports.nosdash;
 
+/* This class handles the dock and intellihide behavior.
+ * Heavily inspired from Michele's Dash to Dock extension
+ * https://github.com/micheleg/dash-to-dock
+ */
 const NosDock = new Lang.Class({
     Name: 'NosDock',
 
     _init: function() {
+        this._signalHandler = new Convenience.GlobalSignalHandler();
+
         this.dash = new NosDash.NosDash();
         this.forcedOverview = false;
 
         this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
 
-        this._box = new St.BoxLayout({ name: 'nosDockBox', reactive: true, track_hover:true,
+        this._box = new St.BoxLayout({ name: 'nosDockBox', reactive: true, track_hover: true,
             style_class: 'box' });
         this.actor = new St.Bin({ name: 'nosDockContainer',reactive: false,
             style_class: 'container', x_align: St.Align.MIDDLE, child: this._box});
@@ -34,6 +40,18 @@ const NosDock = new Lang.Class({
         Main.uiGroup.add_child(this.actor);
         Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
         Main.layoutManager._trackActor(this.dash._box, { affectsStruts: false });
+
+        this._signalHandler.push(
+            [
+                global.screen,
+                'monitors-changed',
+                Lang.bind(this, this._resetPosition)
+            ],
+            [
+                Main.overview.viewSelector._showAppsButton,
+                'notify::checked',
+                Lang.bind(this, this._syncShowAppsButtonToggled)
+            ]);
     },
 
     _initialize: function() {
@@ -92,8 +110,18 @@ const NosDock = new Lang.Class({
             this.forcedOverview = false;
     },
 
+    // Keep ShowAppsButton status in sync with the overview status
+    _syncShowAppsButtonToggled: function() {
+        let status = Main.overview.viewSelector._showAppsButton.checked;
+        if(this.dash.showAppsButton.checked !== status)
+            this.dash.showAppsButton.checked = status;
+    },
+
     destroy: function() {
-        // TODO: destroy signal
+        // Disconnect global signals
+        this._signalHandler.disconnect();
+
+        // Destroy everything
         this.dash.destroy();
         this.actor.destroy();
     }
