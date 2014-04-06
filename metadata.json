@@ -1,6 +1,6 @@
 {
-	"shell-version": ["3.10"], 
-	"uuid": "nos-dock@numixproject.org", 
-	"name": "Numix Desktop Dock", 
-	"description": "Dock"
+    "shell-version": ["3.10"], 
+    "uuid": "nos-dock@numixproject.org", 
+    "name": "Numix Desktop Dock", 
+    "description": "Dock"
 }
