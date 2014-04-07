@@ -1,4 +1,4 @@
-UUID=nos-dock\@numixproject.org
+UUID=atom-dock\@numixproject.org
 INSTALLDIR=~/.local/share/gnome-shell/extensions/$(UUID)
 
 all:
