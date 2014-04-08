@@ -88,6 +88,8 @@ const NosDash = new Lang.Class({
 
     _init : function() {
         this._signalHandler = new Convenience.GlobalSignalHandler();
+        // 75% of monitor width as icon size adjustment threshold
+        this._monitorWidth = Math.floor(Main.layoutManager.primaryMonitor.width * 0.75);
 
         this._maxWidth = -1;
         this.iconSize = 64;
@@ -347,7 +349,7 @@ const NosDash = new Lang.Class({
 
         let themeNode = this._container.get_theme_node();
         let maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
-                                                   x2: this._maxWidth,
+                                                   x2: this._monitorWidth,
                                                    y2: 42 /* whatever */ });
         let maxContent = themeNode.get_content_box(maxAllocation);
         let availWidth = maxContent.x2 - maxContent.x1;
@@ -372,9 +374,9 @@ const NosDash = new Lang.Class({
 
         let availSize = availWidth / iconChildren.length;
 
-        let iconSizes = [ 16, 22, 24, 32, 48, 64 ];
+        let iconSizes = [ /*16, 22,*/ 24, 32, 48/*, 64*/ ];
 
-        let newIconSize = 16;
+        let newIconSize = 24;
         for (let i = 0; i < iconSizes.length; i++) {
             if (iconSizes[i] <= availSize)
                 newIconSize = iconSizes[i];

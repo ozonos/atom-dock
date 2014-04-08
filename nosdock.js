@@ -83,7 +83,7 @@ const NosDock = new Lang.Class({
         this.actor.y = this._monitor.height - this.actor.height;
         this.dash._container.set_width(-1);
 
-        // Modify legacy overview
+        // Modify legacy overview each time the dock repositioned
         this._modifyLegacyOverview();
     },
 

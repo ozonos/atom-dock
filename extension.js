@@ -7,6 +7,9 @@
  * 0.1.1 Changes:
  *  - remove hardcoded css, add theme support
  *  - added Legacy Overview padding-bottom so its elements won't be behind dock
+ *  - fixed incorrect icon sizes on some initialization
+ *  - implemented 75% of screen width as maximum dock width instead of 100%
+ *  - changed possible icon size range to 24-48px for esthetic reasons
  * 
  * 0.1 Changes:
  *  - added NosDock to contain NosDash and handle intellihide behaviors
@@ -15,7 +18,6 @@
  *  - convert indentation to spaces, added emacs header line
  * 
  * TODO(s): 
- *  - on some initialization, icon sizes are not correct
  *  - fix drag and drop behavior
  *  - fix icon's tooltip appearance
  *  - fix gdm log message "Source ID <integer> was not found when attempting to remove it"
@@ -25,7 +27,6 @@
  *  - add settings schema
  *  - implement intellihide
  *  - implement workspace button
- *  - implement 75% of screen width as maximum dock width instead of 100%
  * 
  */
 
