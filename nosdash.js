@@ -35,10 +35,9 @@ const NosDashActor = new Lang.Class({
 
     _init: function() {
         let layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
-        this.parent({ name: 'nos-dash',
+        this.parent({ name: 'dash',
                       layout_manager: layout,
-                      clip_to_allocation: true,
-                      style_class: 'nos-dash' });
+                      clip_to_allocation: true });
     },
 
     vfunc_allocate: function(box, flags) {

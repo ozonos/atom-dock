@@ -30,6 +30,9 @@ const NosDock = new Lang.Class({
         this.actor = new St.Bin({ name: 'nosDockContainer',reactive: false,
             style_class: 'container', x_align: St.Align.MIDDLE, child: this._box});
 
+        // Hide the dock while setting position and theme
+        this.actor.set_opacity(0);
+
         this._realizeId = this.actor.connect('realize', Lang.bind(this, this._initialize));
 
         this._box.add_actor(this.dash.actor);
@@ -62,6 +65,12 @@ const NosDock = new Lang.Class({
 
         // Set initial position
         this._resetPosition();
+
+        // Adjust dock theme to match global theme
+        this._adjustTheme();
+
+        // Show the dock;
+        this.actor.set_opacity(255);
     },
 
     _resetPosition: function() {
@@ -73,6 +82,25 @@ const NosDock = new Lang.Class({
         this.actor.x_align = St.Align.MIDDLE;
         this.actor.y = this._monitor.height - this.actor.height;
         this.dash._container.set_width(-1);
+    },
+
+    _adjustTheme: function() {
+        // Prevent shell crash if the actor is not on the stage.
+        // It happens enabling/disabling repeatedly the extension
+        if(!this.dash._container.get_stage())
+            return;
+
+        let themeNode = this.dash._container.get_theme_node();
+        let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
+        let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
+        let borderRadius = themeNode.get_border_radius(St.Corner.BOTTOMRIGHT);
+        global.log(borderColor.to_string() + ', ' + borderWidth + ', ' + borderRadius +
+            this.dash._container.get_style());
+
+        this.dash._container.set_style(
+            'border-bottom: none;' +
+            'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';' +
+            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;');
     },
 
     _onShowAppsButtonToggled: function() {

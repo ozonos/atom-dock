@@ -45,11 +45,11 @@ function init() {
 }
 
 function setDockTransparent() {
-    nosDock.dash.actor.get_first_child().add_style_class_name('nos-hide-background');
+    nosDock.dash.actor.get_first_child().add_style_class_name('atom-hide-background');
 }
 
 function unsetDockTransparent() {
-    nosDock.dash.actor.get_first_child().remove_style_class_name('nos-hide-background');
+    nosDock.dash.actor.get_first_child().remove_style_class_name('atom-hide-background');
 }
 
 function enable() {

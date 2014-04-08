@@ -1,15 +1,16 @@
-.nos-dash {
+/*.atom-dash {
     padding: 4px 0px;
     background-color: rgba(10, 10, 10, 0.9);
     border: 1px solid rgba(128, 128, 128, 0.4);
     border-bottom: 0px;
-}
+}*/
 
-.nos-hide-background {
+.atom-hide-background {
     background-color: rgba(0, 0, 0, 0);
     border: none;
 }
 
-.dash-item-container > StButton {
+/*.dash-item-container > StButton {
     padding: 4px 8px;
 }
+*/
