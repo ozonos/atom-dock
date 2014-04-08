@@ -1,3 +1,4 @@
-nos-dock
-========
-To install: make install
+Atom dock
+=========
+Custom dock for Atom desktop
+To install: `make install`
