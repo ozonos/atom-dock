@@ -63,11 +63,11 @@ const NosDock = new Lang.Class({
             this._realizeId = 0;
         }
 
-        // Set initial position
-        this._resetPosition();
-
         // Adjust dock theme to match global theme
         this._adjustTheme();
+
+        // Set initial position
+        this._resetPosition();
 
         // Show the dock;
         this.actor.set_opacity(255);
@@ -94,13 +94,14 @@ const NosDock = new Lang.Class({
         let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
         let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
         let borderRadius = themeNode.get_border_radius(St.Corner.BOTTOMRIGHT);
-        global.log(borderColor.to_string() + ', ' + borderWidth + ', ' + borderRadius +
-            this.dash._container.get_style());
 
-        this.dash._container.set_style(
-            'border-bottom: none;' +
-            'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';' +
-            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;');
+        // Set dashStyle to reuse on setTransparent
+        this._dashStyle = 'border-bottom: none;' +
+            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;';
+        this._dashStyleLeftBorder =
+            'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
+
+        this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
     },
 
     _onShowAppsButtonToggled: function() {
@@ -152,6 +153,18 @@ const NosDock = new Lang.Class({
         // Destroy everything
         this.dash.destroy();
         this.actor.destroy();
+    },
+
+    setTransparent: function() {
+        // Hide left border of dashStyle
+        this.dash._container.set_style(this._dashStyle);
+        this.dash._container.add_style_class_name('atom-hide-background');
+    },
+
+    unsetTransparent: function() {
+        // Show left border of dashStyle
+        this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
+        this.dash._container.remove_style_class_name('atom-hide-background');
     }
 
 });

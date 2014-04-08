@@ -25,6 +25,7 @@
  * 
  */
 
+const Lang = imports.lang;
 const St = imports.gi.St;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
@@ -44,14 +45,6 @@ function init() {
     signalHandler = new Convenience.GlobalSignalHandler();
 }
 
-function setDockTransparent() {
-    nosDock.dash.actor.get_first_child().add_style_class_name('atom-hide-background');
-}
-
-function unsetDockTransparent() {
-    nosDock.dash.actor.get_first_child().remove_style_class_name('atom-hide-background');
-}
-
 function enable() {
     oldDash.hideDash();
     nosDock = new NosDock.NosDock();
@@ -59,12 +52,12 @@ function enable() {
         [
             Main.overview,
             'showing',
-            setDockTransparent
+            Lang.bind(nosDock, nosDock.setTransparent)
         ],
         [
             Main.overview,
             'hiding',
-            unsetDockTransparent
+            Lang.bind(nosDock, nosDock.unsetTransparent)
         ]);
 }
 
