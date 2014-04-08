@@ -2,7 +2,11 @@
 
 /* Numix/Ozon Project 2014
  * 
- * Extension's version: 0.1
+ * Extension's version: 0.1.1
+ * 
+ * 0.1.1 Changes:
+ *  - remove hardcoded css, add theme support
+ *  - added Legacy Overview padding-bottom so its elements won't be behind dock
  * 
  * 0.1 Changes:
  *  - added NosDock to contain NosDash and handle intellihide behaviors

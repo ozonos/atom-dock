@@ -77,11 +77,14 @@ const NosDock = new Lang.Class({
         // Get the monitor
         this._monitor = Main.layoutManager.primaryMonitor;
 
-        this.actor.width = Math.round(this._monitor.width);
+        this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
         this.actor.x_align = St.Align.MIDDLE;
         this.actor.y = this._monitor.height - this.actor.height;
         this.dash._container.set_width(-1);
+
+        // Modify legacy overview
+        this._modifyLegacyOverview();
     },
 
     _adjustTheme: function() {
@@ -102,6 +105,16 @@ const NosDock = new Lang.Class({
             'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
 
         this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
+    },
+
+    _modifyLegacyOverview: function() {
+        // Set legacy overview bottom padding
+        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this.actor.height + 'px;');
+    },
+
+    _restoreLegacyOverview: function() {
+        // Remove legacy overview bottom padding
+        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this.actor.height + 'px;');
     },
 
     _onShowAppsButtonToggled: function() {
@@ -153,6 +166,9 @@ const NosDock = new Lang.Class({
         // Destroy everything
         this.dash.destroy();
         this.actor.destroy();
+
+        // Restore legacy overview modifications
+        this._restoreLegacyOverview();
     },
 
     setTransparent: function() {
