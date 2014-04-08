@@ -1,20 +1,22 @@
+// -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
+
 const Lang = imports.lang;
 const Main = imports.ui.main;
 
 let gnomeDash = function(){
-	this.init();
+    this.init();
 }
 
 gnomeDash.prototype = {
-	init: function(){
-		this.dash = Main.overview._dash.actor.get_parent();
-	},
+    init: function(){
+        this.dash = Main.overview._dash.actor.get_parent();
+    },
 
-	hideDash: function(){
-		this.dash.hide();
-	},
+    hideDash: function(){
+        this.dash.hide();
+    },
 
-	showDash: function(){
-		this.dash.show();
-	},
+    showDash: function(){
+        this.dash.show();
+    },
 };
