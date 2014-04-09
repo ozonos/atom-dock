@@ -6,9 +6,8 @@
  *
  * Part of this file comes from gnome-shell-extensions:
  * http://git.gnome.org/browse/gnome-shell-extensions/
- * 
+ *
  */
-
 
 const Gettext = imports.gettext;
 const Gio = imports.gi.Gio;
@@ -16,7 +15,6 @@ const Lang = imports.lang;
 
 const Config = imports.misc.config;
 const ExtensionUtils = imports.misc.extensionUtils;
-
 
 /**
  * initTranslations:
@@ -26,6 +24,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
  * If @domain is not provided, it will be taken from metadata['gettext-domain']
  */
 function initTranslations(domain) {
+
     let extension = ExtensionUtils.getCurrentExtension();
 
     domain = domain || extension.metadata['gettext-domain'];
@@ -51,6 +50,7 @@ function initTranslations(domain) {
  * metadata['settings-schema'].
  */
 function getSettings(schema) {
+
     let extension = ExtensionUtils.getCurrentExtension();
 
     schema = schema || extension.metadata['settings-schema'];
@@ -74,8 +74,8 @@ function getSettings(schema) {
 
     let schemaObj = schemaSource.lookup(schema, true);
     if (!schemaObj) {
-        throw new Error('Schema ' + schema + ' could not be found for extension '
-                        + extension.metadata.uuid + '. Please check your installation.');
+        throw new Error('Schema ' + schema + ' could not be found for extension ' +
+            extension.metadata.uuid + '. Please check your installation.');
     }
 
     return new Gio.Settings({ settings_schema: schemaObj });
@@ -86,7 +86,7 @@ const GlobalSignalHandler = new Lang.Class({
     Name: 'NosDock.GlobalSignalHandler',
 
     _init: function(){
-        this._signals = new Object();
+        this._signals = {};
     },
 
     push: function(/*unlimited 3-long array arguments*/){
@@ -102,7 +102,7 @@ const GlobalSignalHandler = new Lang.Class({
     pushWithLabel: function(label /* plus unlimited 3-long array arguments*/) {
 
         // skip first element of thearguments array;
-        let elements = new Array;
+        let elements = [];
         for (let i = 1 ; i< arguments.length; i++) {
             elements.push(arguments[i]);
         }
@@ -111,11 +111,13 @@ const GlobalSignalHandler = new Lang.Class({
     },
 
     _addSignals: function(label, elements) {
-        if (this._signals[label] == undefined) {
-            this._signals[label] = new Array();
+
+        if (this._signals[label] === undefined) {
+            this._signals[label] = [];
         }
 
-        for (let i = 0; i < elements.length; i++) { 
+        for (let i = 0; i < elements.length; i++) {
+
             let object = elements[i][0];
             let event = elements[i][1];
 
@@ -134,6 +136,5 @@ const GlobalSignalHandler = new Lang.Class({
             delete this._signals[label];
         }
     }
-
 
 });

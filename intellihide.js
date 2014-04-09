@@ -2,6 +2,7 @@
 
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
+const Signals = imports.signals;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 
@@ -23,17 +24,17 @@ const handledWindowTypes = [
 /*
  * Forked from Michele's Dash to Dock extension
  * https://github.com/micheleg/dash-to-dock
- * 
+ *
  * A rough and ugly implementation of the intellihide behaviour.
  * Intallihide object: call show()/hide() function based on the overlap with the
  * the target actor object;
- * 
- * Target object has to contain a Clutter.ActorBox object named staticBox and 
+ *
+ * Target object has to contain a Clutter.ActorBox object named staticBox and
  * emit a 'box-changed' signal when this changes.
- * 
+ *
  */
 
- const intellihide = new Lang.Class({
+const Intellihide = new Lang.Class({
     Name: 'Intellihide',
 
     _init: function(show, hide, target) {
@@ -42,7 +43,7 @@ const handledWindowTypes = [
         this._focusApp = null;
 
         // current intellihide status
-        this.status;
+        this.status = undefined;
         // manually temporary disable intellihide update
         this._disableIntellihide = false;
         // Set base functions
@@ -51,7 +52,7 @@ const handledWindowTypes = [
         // Target object
         this._target = target;
 
-        // Main id of the timeout controlling timeout for updateDockVisibility function 
+        // Main id of the timeout controlling timeout for updateDockVisibility function
         // when windows are dragged around (move and resize)
         this._windowChangedTimeout = 0;
 
@@ -78,7 +79,7 @@ const handledWindowTypes = [
             // direct maximize/unmazimize are not included in grab-operations
             [
                 global.window_manager,
-                'maximize', 
+                'maximize',
                 Lang.bind(this, this._updateDockVisibility)
             ],
             [
@@ -114,7 +115,8 @@ const handledWindowTypes = [
                 global.screen,
                 'monitors-changed',
                 Lang.bind(this, this._updateDockVisibility)
-            ]);
+            ]
+        );
 
         // initialize: call show forcing to initialize status variable
         this._show(true);
@@ -273,6 +275,7 @@ const handledWindowTypes = [
     // Filter windows by type
     // inspired by Opacify@gnome-shell.localdomain.pl
     _handledWindow: function(metaWindow) {
+
         // The DropDownTerminal extension uses the POPUP_MENU window type hint
         // so we match its window by wm class instead
         if (metaWindow.get_wm_class() == 'DropDownTerminalWindow') {
@@ -289,7 +292,6 @@ const handledWindowTypes = [
             }
         }
         return false;
-
     }
 
 });

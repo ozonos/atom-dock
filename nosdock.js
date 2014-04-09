@@ -73,7 +73,18 @@ const NosDock = new Lang.Class({
                 Main.overview.viewSelector._showAppsButton,
                 'notify::checked',
                 Lang.bind(this, this._syncShowAppsButtonToggled)
-            ]);
+            ],
+            [
+                Main.overview,
+                'showing',
+                Lang.bind(this, this._setTransparent)
+            ],
+            [
+                Main.overview,
+                'hiding',
+                Lang.bind(this, this._unsetTransparent)
+            ]
+        );
     },
 
     _initialize: function() {
@@ -181,7 +192,7 @@ const NosDock = new Lang.Class({
 
         // whenever the button is unactivated even if not by the user still reset the
         // forcedOverview flag
-        if( this.dash.showAppsButton.checked==false)
+        if( this.dash.showAppsButton.checked === false)
             this.forcedOverview = false;
     },
 
@@ -205,7 +216,7 @@ const NosDock = new Lang.Class({
         this._restoreLegacyOverview();
     },
 
-    setTransparent: function() {
+    _setTransparent: function() {
         // Hide left border of dashStyle
         this.dash._container.set_style(this._dashStyle);
         this.dash._container.add_style_class_name('atom-hide-background');
@@ -214,7 +225,7 @@ const NosDock = new Lang.Class({
         this.disableAutoHide();
     },
 
-    unsetTransparent: function() {
+    _unsetTransparent: function() {
         // Show left border of dashStyle
         this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
         this.dash._container.remove_style_class_name('atom-hide-background');
