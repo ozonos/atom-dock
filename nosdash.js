@@ -321,7 +321,7 @@ const NosDash = new Lang.Class({
                                    }));
         appIcon.connect('menu-state-changed',
                         Lang.bind(this, function(appIcon, opened) {
-                            this._itemMenuStateChanged(appIcon, opened);
+                            this._itemMenuStateChanged(item, opened);
                         }));
 
         let item = new NosDashItemContainer();
