@@ -2,8 +2,11 @@
 
 /* Numix/Ozon Project 2014
  * 
- * Extension's version: 0.1.1
+ * Extension's version: 0.2
  * 
+ * 0.2 Changes:
+ *  - added intellihide.js, implemented intellihide
+ *
  * 0.1.1 Changes:
  *  - remove hardcoded css, add theme support
  *  - added Legacy Overview padding-bottom so its elements won't be behind dock
@@ -25,7 +28,6 @@
  *  - use different name for NosDash?
  *  - check behavior on multiple monitor
  *  - add settings schema
- *  - implement intellihide
  *  - implement workspace button
  * 
  */
@@ -39,10 +41,12 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const GnomeDash = Me.imports.gnomedash;
+const Intellihide = Me.imports.intellihide;
 const NosDock = Me.imports.nosdock;
 
 let oldDash;
 let nosDock;
+let intellihide;
 let signalHandler;
 
 function init() {
@@ -50,9 +54,18 @@ function init() {
     signalHandler = new Convenience.GlobalSignalHandler();
 }
 
+function show() {
+    nosDock.disableAutoHide();
+}
+
+function hide() {
+    nosDock.enableAutoHide();
+}
+
 function enable() {
     oldDash.hideDash();
     nosDock = new NosDock.NosDock();
+    intellihide = new Intellihide.intellihide(show, hide, nosDock);
     signalHandler.push(
         [
             Main.overview,
@@ -68,6 +81,7 @@ function enable() {
 
 function disable() {
     signalHandler.disconnect();
+    intellihide.destroy();
     nosDock.destroy();
     oldDash.showDash();
 }
