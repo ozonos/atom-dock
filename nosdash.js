@@ -161,7 +161,8 @@ const NosDash = new Lang.Class({
                 Main.overview,
                 'item-drag-cancelled',
                 Lang.bind(this, this._onDragCancelled)
-            ]);
+            ]
+        );
 
         // Translators: this is the name of the dock/favorites area on
         // the left of the overview

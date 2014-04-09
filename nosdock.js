@@ -26,6 +26,7 @@ const NosDock = new Lang.Class({
     Name: 'NosDock',
 
     _init: function() {
+
         this._signalHandler = new Convenience.GlobalSignalHandler();
 
         this.dash = new NosDash.NosDash();
@@ -34,7 +35,7 @@ const NosDock = new Lang.Class({
         this.staticBox = new Clutter.ActorBox();
 
         // initialize animation status object
-        this._animStatus = new animationStatus(true);
+        this._animStatus = new AnimationStatus(true);
 
         // Current autohide status
         this._autohideStatus = false;
@@ -88,6 +89,7 @@ const NosDock = new Lang.Class({
     },
 
     _initialize: function() {
+
         if (this._realizeId > 0){
             this.actor.disconnect(this._realizeId);
             this._realizeId = 0;
@@ -104,7 +106,8 @@ const NosDock = new Lang.Class({
     },
 
     _resetPosition: function() {
-        // Get the monitor
+
+        // Get primary monitor to display dock
         this._monitor = Main.layoutManager.primaryMonitor;
 
         this.actor.width = this._monitor.width;
@@ -121,6 +124,8 @@ const NosDock = new Lang.Class({
     },
 
     _updateStaticBox: function() {
+
+        // Init static box in accordance with dock's placement
         this.staticBox.init_rect(
             this._monitor.x + this._box.x,
             this._monitor.height - this._box.height,
@@ -132,6 +137,7 @@ const NosDock = new Lang.Class({
     },
 
     _adjustTheme: function() {
+
         // Prevent shell crash if the actor is not on the stage.
         // It happens enabling/disabling repeatedly the extension
         if(!this.dash._container.get_stage())
@@ -198,6 +204,7 @@ const NosDock = new Lang.Class({
 
     // Keep ShowAppsButton status in sync with the overview status
     _syncShowAppsButtonToggled: function() {
+
         let status = Main.overview.viewSelector._showAppsButton.checked;
         if (this.dash.showAppsButton.checked !== status) {
             this.dash.showAppsButton.checked = status;
@@ -205,6 +212,7 @@ const NosDock = new Lang.Class({
     },
 
     destroy: function() {
+
         // Disconnect global signals
         this._signalHandler.disconnect();
 
@@ -217,6 +225,7 @@ const NosDock = new Lang.Class({
     },
 
     _setTransparent: function() {
+
         // Hide left border of dashStyle
         this.dash._container.set_style(this._dashStyle);
         this.dash._container.add_style_class_name('atom-hide-background');
@@ -226,6 +235,7 @@ const NosDock = new Lang.Class({
     },
 
     _unsetTransparent: function() {
+
         // Show left border of dashStyle
         this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
         this.dash._container.remove_style_class_name('atom-hide-background');
@@ -252,14 +262,14 @@ const NosDock = new Lang.Class({
         }
     },
 
-    _show: function() {  
+    _show: function() {
 
         var anim = this._animStatus;
 
         if (this._autohideStatus && (anim.hidden() || anim.hiding())) {
 
             let delay;
-            // If the dock is hidden, wait this._settings.get_double('show-delay') before showing it; 
+            // If the dock is hidden, wait this._settings.get_double('show-delay') before showing it;
             // otherwise show it immediately.
             if (anim.hidden()) {
                 delay = SHOW_DELAY;
@@ -283,13 +293,13 @@ const NosDock = new Lang.Class({
 
             let delay;
 
-            // If a show is queued but still not started (i.e the mouse was 
-            // over the screen  border but then went away, i.e not a sufficient 
+            // If a show is queued but still not started (i.e the mouse was
+            // over the screen  border but then went away, i.e not a sufficient
             // amount of time is passeed to trigger the dock showing) remove it.
             if (anim.showing()) {
                 if (anim.running){
                     //if a show already started, let it finish; queue hide without removing the show.
-                    // to obtain this I increase the delay to avoid the overlap and interference 
+                    // to obtain this I increase the delay to avoid the overlap and interference
                     // between the animations
                     delay = HIDE_DELAY + 1.2 * ANIMATION_TIME + SHOW_DELAY;
 
@@ -342,14 +352,15 @@ const NosDock = new Lang.Class({
             }),
             onOverwrite : Lang.bind(this, function() { this._animStatus.clear(); }),
             onComplete: Lang.bind(this, function() {
-                this._animStatus.end(); 
+                this._animStatus.end();
             })
         });
     },
 
     // Disable autohide effect, thus show dash
     disableAutoHide: function() {
-        if (this._autohideStatus == true){
+
+        if (this._autohideStatus === true){
             this._autohideStatus = false;
 
             this._removeAnimations();
@@ -359,14 +370,15 @@ const NosDock = new Lang.Class({
 
     // Enable autohide effect, hide dash
     enableAutoHide: function() {
-        if (this._autohideStatus == false){
+
+        if (this._autohideStatus === false){
 
             let delay = 0; // immediately fadein background if hide is blocked by mouseover,
                          // oterwise start fadein when dock is already hidden.
             this._autohideStatus = true;
             this._removeAnimations();
 
-            if (this._box.hover == true) {
+            if (this._box.hover === true) {
                 this._box.sync_hover();
             }
 
@@ -387,11 +399,11 @@ Signals.addSignalMethods(NosDock.prototype);
  * Store animation status in a perhaps overcomplicated way.
  * status is true for visible, false for hidden
  */
-const animationStatus = new Lang.Class({
+const AnimationStatus = new Lang.Class({
     Name: 'AnimationStatus',
 
     _init: function(initialStatus){
-        this.status  = initialStatus;
+        this.status = initialStatus;
         this.nextStatus  = [];
         this.queued = false;
         this.running = false;
@@ -403,22 +415,22 @@ const animationStatus = new Lang.Class({
     },
 
     start: function(){
-        if(this.nextStatus.length == 1){
+        if (this.nextStatus.length == 1) {
             this.queued = false;
         }
         this.running = true;
     },
 
     end: function(){
-        if(this.nextStatus.length == 1){
-            this.queued=false; // in the case end is called and start was not
+        if (this.nextStatus.length == 1) {
+            this.queued = false; // in the case end is called and start was not
         }
-        this.running=false;
+        this.running = false;
         this.status = this.nextStatus.shift();
     },
 
     clear: function(){
-        if(this.nextStatus.length == 1){
+        if (this.nextStatus.length == 1) {
             this.queued = false;
             this.running = false;
         }
@@ -434,7 +446,7 @@ const animationStatus = new Lang.Class({
 
     // Return true if a showing animation is running or queued
     showing: function(){
-        if ((this.running == true || this.queued == true) && this.nextStatus[0] == true) {
+        if ((this.running === true || this.queued === true) && this.nextStatus[0] === true) {
             return true;
         } else {
             return false;
@@ -442,7 +454,7 @@ const animationStatus = new Lang.Class({
     },
 
     shown: function(){
-        if (this.status==true && !(this.queued || this.running)) {
+        if (this.status === true && !(this.queued || this.running)) {
             return true;
         } else {
             return false;
@@ -451,7 +463,7 @@ const animationStatus = new Lang.Class({
 
     // Return true if an hiding animation is running or queued
     hiding: function(){
-        if ((this.running == true || this.queued == true) && this.nextStatus[0] == false) {
+        if ((this.running === true || this.queued === true) && this.nextStatus[0] === false) {
             return true;
         } else {
             return false;
@@ -459,7 +471,7 @@ const animationStatus = new Lang.Class({
     },
 
     hidden: function(){
-        if (this.status==false && !(this.queued || this.running)) {
+        if (this.status === false && !(this.queued || this.running)) {
             return true;
         } else {
             return false;
