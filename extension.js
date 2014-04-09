@@ -7,6 +7,7 @@
  * 0.2.1 Changes:
  *  - change GnomeDash to Lang Class
  *  - fixed drag and drop behavior
+ *  - icon label now appear on top of dock
  *  - more cleaning up
  *
  * 0.2 Changes:
@@ -26,7 +27,6 @@
  *  - convert indentation to spaces, added emacs header line
  *
  * TODO(s):
- *  - fix icon's tooltip appearance
  *  - use different name for NosDash?
  *  - check behavior on multiple monitor
  *  - add settings schema

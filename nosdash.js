@@ -23,6 +23,48 @@ let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
+const NosDashItemContainer = new Lang.Class({
+    Name: 'NosDashItemContainer',
+    Extends: Dash.DashItemContainer,
+
+    _init: function() {
+        this.parent();
+    },
+
+    showLabel: function() {
+
+        if (!this._labelText)
+            return;
+
+        this.label.set_text(this._labelText);
+        this.label.opacity = 0;
+        this.label.show();
+
+        let [stageX, stageY] = this.get_transformed_position();
+
+        let labelHeight = this.label.get_height();
+        let labelWidth = this.label.get_width();
+
+        let node = this.label.get_theme_node();
+        let yOffset = node.get_length('-x-offset'); // borrowing from x-offset
+
+        let y = stageY - labelHeight - yOffset;
+
+        let itemWidth = this.allocation.x2 - this.allocation.x1;
+        let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+
+        let x = stageX + xOffset;
+
+        this.label.set_position(x, y);
+        Tweener.addTween(this.label,
+                         { opacity: 255,
+                           time: DASH_ITEM_LABEL_SHOW_TIME,
+                           transition: 'easeOutQuad',
+                         });
+
+    }
+});
+
 /* This class is a fork of the upstream DashActor class (ui.dash.js).
  * Heavily inspired from Michele's Dash to Dock extension
  * https://github.com/micheleg/dash-to-dock
@@ -32,6 +74,7 @@ const NosDashActor = new Lang.Class({
     Extends: St.Widget,
 
     _init: function() {
+
         let layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
         this.parent({ name: 'dash',
                       layout_manager: layout,
@@ -39,6 +82,7 @@ const NosDashActor = new Lang.Class({
     },
 
     vfunc_allocate: function(box, flags) {
+
         let contentBox = this.get_theme_node().get_content_box(box);
         let availWidth = contentBox.x2 - contentBox.x1;
 
@@ -60,6 +104,7 @@ const NosDashActor = new Lang.Class({
     },
 
     vfunc_get_preferred_width: function(forHeight) {
+
         // We want to request the natural height of all our children
         // as our natural height, so we chain up to StWidget (which
         // then calls BoxLayout), but we only request the showApps
@@ -85,6 +130,7 @@ const NosDash = new Lang.Class({
     Name: 'NosDash',
 
     _init: function() {
+
         this._signalHandler = new Convenience.GlobalSignalHandler();
         // 75% of monitor width as icon size adjustment threshold
         this._monitorWidth = Math.floor(Main.layoutManager.primaryMonitor.width * 0.75);
@@ -174,6 +220,7 @@ const NosDash = new Lang.Class({
     },
 
     _onDragBegin: function() {
+
         this._dragCancelled = false;
         this._dragMonitor = {
             dragMotion: Lang.bind(this, this._onDragMotion)
@@ -188,11 +235,13 @@ const NosDash = new Lang.Class({
     },
 
     _onDragCancelled: function() {
+
         this._dragCancelled = true;
         this._endDrag();
     },
 
     _onDragEnd: function() {
+
         if (this._dragCancelled)
             return;
 
@@ -200,6 +249,7 @@ const NosDash = new Lang.Class({
     },
 
     _endDrag: function() {
+
         this._clearDragPlaceholder();
         this._clearEmptyDropTarget();
         this._showAppsIcon.setDragApp(null);
@@ -207,6 +257,7 @@ const NosDash = new Lang.Class({
     },
 
     _onDragMotion: function(dragEvent) {
+
         let app = Dash.getAppFromSource(dragEvent.source);
         if (app === null)
             return DND.DragMotionResult.CONTINUE;
@@ -226,6 +277,7 @@ const NosDash = new Lang.Class({
     },
 
     _appIdListToHash: function(apps) {
+
         let ids = {};
         for (let i = 0; i < apps.length; i++)
             ids[apps[i].get_id()] = apps[i];
@@ -237,6 +289,7 @@ const NosDash = new Lang.Class({
     },
 
     _hookUpLabel: function(item, appIcon) {
+
         item.child.connect('notify::hover', Lang.bind(this, function() {
             this._syncLabel(item, appIcon);
         }));
@@ -254,6 +307,7 @@ const NosDash = new Lang.Class({
     },
 
     _createAppItem: function(app) {
+
         let appIcon = new AppDisplay.AppIcon(app,
                                              { setSizeManually: true,
                                                showLabel: false });
@@ -270,7 +324,7 @@ const NosDash = new Lang.Class({
                             this._itemMenuStateChanged(appIcon, opened);
                         }));
 
-        let item = new Dash.DashItemContainer();
+        let item = new NosDashItemContainer();
         item.setChild(appIcon.actor);
 
         // Override default AppIcon label_actor, now the
@@ -285,6 +339,7 @@ const NosDash = new Lang.Class({
     },
 
     _itemMenuStateChanged: function(item, opened) {
+
         // When the menu closes, it calls sync_hover, which means
         // that the notify::hover handler does everything we need to.
         if (opened) {
@@ -298,6 +353,7 @@ const NosDash = new Lang.Class({
     },
 
     _syncLabel: function (item, appIcon) {
+
         let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();
 
         if (shouldShow) {
@@ -330,6 +386,7 @@ const NosDash = new Lang.Class({
     },
 
     _adjustIconSize: function() {
+
         // For the icon size, we only consider children which are "proper"
         // icons (i.e. ignoring drag placeholders) and which are not
         // animating out (which means they will be destroyed at the end of
@@ -423,6 +480,7 @@ const NosDash = new Lang.Class({
     },
 
     _redisplay: function () {
+
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
         let running = this._appSystem.get_running();
@@ -552,6 +610,7 @@ const NosDash = new Lang.Class({
     },
 
     _clearDragPlaceholder: function() {
+
         if (this._dragPlaceholder) {
             this._animatingPlaceholdersCount++;
             this._dragPlaceholder.animateOutAndDestroy();
@@ -565,6 +624,7 @@ const NosDash = new Lang.Class({
     },
 
     _clearEmptyDropTarget: function() {
+
         if (this._emptyDropTarget) {
             this._emptyDropTarget.animateOutAndDestroy();
             this._emptyDropTarget = null;
