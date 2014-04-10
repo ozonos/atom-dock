@@ -225,20 +225,12 @@ const NosDock = new Lang.Class({
     },
 
     _setTransparent: function() {
-
-        // Hide left border of dashStyle
-        this.dash._container.set_style(this._dashStyle);
-        this.dash._container.add_style_class_name('atom-hide-background');
-
-        // force disable auto hide on overview
+        this.dash._container.add_style_pseudo_class('overview');
         this.disableAutoHide();
     },
 
     _unsetTransparent: function() {
-
-        // Show left border of dashStyle
-        this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
-        this.dash._container.remove_style_class_name('atom-hide-background');
+        this.dash._container.remove_style_pseudo_class('overview');
     },
 
     _hoverChanged: function() {
