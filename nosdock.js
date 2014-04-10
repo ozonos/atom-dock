@@ -14,7 +14,7 @@ const Convenience = Me.imports.convenience;
 const NosDash = Me.imports.nosdash;
 
 // This will be on settings scheme
-const ANIMATION_TIME = 0.5;
+const ANIMATION_TIME = 0.3;
 const SHOW_DELAY = 0.25;
 const HIDE_DELAY = 0.25;
 
