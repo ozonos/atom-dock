@@ -3,20 +3,18 @@
 const Lang = imports.lang;
 const Main = imports.ui.main;
 
-let gnomeDash = function(){
-    this.init();
-}
+const GnomeDash = new Lang.Class({
+    Name: 'GnomeDash',
 
-gnomeDash.prototype = {
-    init: function(){
-        this.dash = Main.overview._dash.actor.get_parent();
+    _init: function() {
+        this._dash = Main.overview._dash.actor.get_parent();
     },
 
-    hideDash: function(){
-        this.dash.hide();
+    hideDash: function() {
+        this._dash.hide();
     },
 
-    showDash: function(){
-        this.dash.show();
-    },
-};
+    showDash: function() {
+        this._dash.show();
+    }
+});

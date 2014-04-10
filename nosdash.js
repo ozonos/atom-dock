@@ -1,21 +1,19 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
 
-const Clutter = imports.gi.Clutter;
-const Signals = imports.signals;
 const Lang = imports.lang;
+const Mainloop = imports.mainloop;
+const Signals = imports.signals;
+const Clutter = imports.gi.Clutter;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const St = imports.gi.St;
-const Mainloop = imports.mainloop;
 
 const AppDisplay = imports.ui.appDisplay;
 const AppFavorites = imports.ui.appFavorites;
 const Dash = imports.ui.dash;
 const DND = imports.ui.dnd;
-const IconGrid = imports.ui.iconGrid;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
-const Workspace = imports.ui.workspace;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
@@ -24,6 +22,48 @@ let DASH_ANIMATION_TIME = Dash.DASH_ANIMATION_TIME;
 let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
+
+const NosDashItemContainer = new Lang.Class({
+    Name: 'NosDashItemContainer',
+    Extends: Dash.DashItemContainer,
+
+    _init: function() {
+        this.parent();
+    },
+
+    showLabel: function() {
+
+        if (!this._labelText)
+            return;
+
+        this.label.set_text(this._labelText);
+        this.label.opacity = 0;
+        this.label.show();
+
+        let [stageX, stageY] = this.get_transformed_position();
+
+        let labelHeight = this.label.get_height();
+        let labelWidth = this.label.get_width();
+
+        let node = this.label.get_theme_node();
+        let yOffset = node.get_length('-x-offset'); // borrowing from x-offset
+
+        let y = stageY - labelHeight - yOffset;
+
+        let itemWidth = this.allocation.x2 - this.allocation.x1;
+        let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+
+        let x = stageX + xOffset;
+
+        this.label.set_position(x, y);
+        Tweener.addTween(this.label,
+                         { opacity: 255,
+                           time: DASH_ITEM_LABEL_SHOW_TIME,
+                           transition: 'easeOutQuad',
+                         });
+
+    }
+});
 
 /* This class is a fork of the upstream DashActor class (ui.dash.js).
  * Heavily inspired from Michele's Dash to Dock extension
@@ -34,6 +74,7 @@ const NosDashActor = new Lang.Class({
     Extends: St.Widget,
 
     _init: function() {
+
         let layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
         this.parent({ name: 'dash',
                       layout_manager: layout,
@@ -41,13 +82,14 @@ const NosDashActor = new Lang.Class({
     },
 
     vfunc_allocate: function(box, flags) {
+
         let contentBox = this.get_theme_node().get_content_box(box);
         let availWidth = contentBox.x2 - contentBox.x1;
 
         this.set_allocation(box, flags);
 
         let [appIcons, showAppsButton] = this.get_children();
-        let [showAppsMinWidth, showAppsNatWidth] = showAppsButton.get_preferred_width(availWidth);
+        let [, showAppsNatWidth] = showAppsButton.get_preferred_width(availWidth);
 
         let childBox = new Clutter.ActorBox();
         childBox.x1 = contentBox.x1;
@@ -62,6 +104,7 @@ const NosDashActor = new Lang.Class({
     },
 
     vfunc_get_preferred_width: function(forHeight) {
+
         // We want to request the natural height of all our children
         // as our natural height, so we chain up to StWidget (which
         // then calls BoxLayout), but we only request the showApps
@@ -86,7 +129,8 @@ const NosDashActor = new Lang.Class({
 const NosDash = new Lang.Class({
     Name: 'NosDash',
 
-    _init : function() {
+    _init: function() {
+
         this._signalHandler = new Convenience.GlobalSignalHandler();
         // 75% of monitor width as icon size adjustment threshold
         this._monitorWidth = Math.floor(Main.layoutManager.primaryMonitor.width * 0.75);
@@ -163,7 +207,8 @@ const NosDash = new Lang.Class({
                 Main.overview,
                 'item-drag-cancelled',
                 Lang.bind(this, this._onDragCancelled)
-            ]);
+            ]
+        );
 
         // Translators: this is the name of the dock/favorites area on
         // the left of the overview
@@ -175,13 +220,14 @@ const NosDash = new Lang.Class({
     },
 
     _onDragBegin: function() {
+
         this._dragCancelled = false;
         this._dragMonitor = {
             dragMotion: Lang.bind(this, this._onDragMotion)
         };
         DND.addDragMonitor(this._dragMonitor);
 
-        if (this._box.get_n_children() == 0) {
+        if (this._box.get_n_children() === 0) {
             this._emptyDropTarget = new Dash.EmptyDropTargetItem();
             this._box.insert_child_at_index(this._emptyDropTarget, 0);
             this._emptyDropTarget.show(true);
@@ -189,11 +235,13 @@ const NosDash = new Lang.Class({
     },
 
     _onDragCancelled: function() {
+
         this._dragCancelled = true;
         this._endDrag();
     },
 
     _onDragEnd: function() {
+
         if (this._dragCancelled)
             return;
 
@@ -201,6 +249,7 @@ const NosDash = new Lang.Class({
     },
 
     _endDrag: function() {
+
         this._clearDragPlaceholder();
         this._clearEmptyDropTarget();
         this._showAppsIcon.setDragApp(null);
@@ -208,8 +257,9 @@ const NosDash = new Lang.Class({
     },
 
     _onDragMotion: function(dragEvent) {
+
         let app = Dash.getAppFromSource(dragEvent.source);
-        if (app == null)
+        if (app === null)
             return DND.DragMotionResult.CONTINUE;
 
         let showAppsHovered =
@@ -227,6 +277,7 @@ const NosDash = new Lang.Class({
     },
 
     _appIdListToHash: function(apps) {
+
         let ids = {};
         for (let i = 0; i < apps.length; i++)
             ids[apps[i].get_id()] = apps[i];
@@ -238,6 +289,7 @@ const NosDash = new Lang.Class({
     },
 
     _hookUpLabel: function(item, appIcon) {
+
         item.child.connect('notify::hover', Lang.bind(this, function() {
             this._syncLabel(item, appIcon);
         }));
@@ -255,6 +307,7 @@ const NosDash = new Lang.Class({
     },
 
     _createAppItem: function(app) {
+
         let appIcon = new AppDisplay.AppIcon(app,
                                              { setSizeManually: true,
                                                showLabel: false });
@@ -271,7 +324,7 @@ const NosDash = new Lang.Class({
                             this._itemMenuStateChanged(item, opened);
                         }));
 
-        let item = new Dash.DashItemContainer();
+        let item = new NosDashItemContainer();
         item.setChild(appIcon.actor);
 
         // Override default AppIcon label_actor, now the
@@ -286,6 +339,7 @@ const NosDash = new Lang.Class({
     },
 
     _itemMenuStateChanged: function(item, opened) {
+
         // When the menu closes, it calls sync_hover, which means
         // that the notify::hover handler does everything we need to.
         if (opened) {
@@ -299,10 +353,11 @@ const NosDash = new Lang.Class({
     },
 
     _syncLabel: function (item, appIcon) {
+
         let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();
 
         if (shouldShow) {
-            if (this._showLabelTimeoutId == 0) {
+            if (this._showLabelTimeoutId === 0) {
                 let timeout = this._labelShowing ? 0 : DASH_ITEM_HOVER_TIMEOUT;
                 this._showLabelTimeoutId = Mainloop.timeout_add(timeout,
                     Lang.bind(this, function() {
@@ -331,6 +386,7 @@ const NosDash = new Lang.Class({
     },
 
     _adjustIconSize: function() {
+
         // For the icon size, we only consider children which are "proper"
         // icons (i.e. ignoring drag placeholders) and which are not
         // animating out (which means they will be destroyed at the end of
@@ -344,8 +400,9 @@ const NosDash = new Lang.Class({
 
         iconChildren.push(this._showAppsIcon);
 
-        if (this._maxWidth == -1)
+        if (this._maxWidth == -1) {
             return;
+        }
 
         let themeNode = this._container.get_theme_node();
         let maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
@@ -400,8 +457,9 @@ const NosDash = new Lang.Class({
             // is transitioning, not visible or when initially filling
             // the dash
             if (!Main.overview.visible || Main.overview.animationInProgress ||
-                !this._shownInitially)
+                !this._shownInitially) {
                 continue;
+            }
 
             let [targetWidth, targetHeight] = icon.icon.get_size();
 
@@ -422,6 +480,7 @@ const NosDash = new Lang.Class({
     },
 
     _redisplay: function () {
+
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
         let running = this._appSystem.get_running();
@@ -551,6 +610,7 @@ const NosDash = new Lang.Class({
     },
 
     _clearDragPlaceholder: function() {
+
         if (this._dragPlaceholder) {
             this._animatingPlaceholdersCount++;
             this._dragPlaceholder.animateOutAndDestroy();
@@ -564,6 +624,7 @@ const NosDash = new Lang.Class({
     },
 
     _clearEmptyDropTarget: function() {
+
         if (this._emptyDropTarget) {
             this._emptyDropTarget.animateOutAndDestroy();
             this._emptyDropTarget = null;
@@ -571,10 +632,11 @@ const NosDash = new Lang.Class({
     },
 
     handleDragOver : function(source, actor, x, y, time) {
+
         let app = Dash.getAppFromSource(source);
 
         // Don't allow favoriting of transient apps
-        if (app == null || app.is_window_backed())
+        if (app === null || app.is_window_backed())
             return DND.DragMotionResult.NO_DROP;
 
         let favorites = AppFavorites.getAppFavorites().getFavorites();
@@ -595,12 +657,13 @@ const NosDash = new Lang.Class({
         }
 
         let pos;
-        if (!this._emptyDropTarget)
-            pos = Math.floor(y * numChildren / boxWidth);
-        else
+        if (!this._emptyDropTarget) {
+            pos = Math.floor(x * numChildren / boxWidth);
+        } else {
             pos = 0; // always insert at the top when dash is empty
+        }
 
-        if (pos != this._dragPlaceholderPos && pos <= numFavorites && this._animatingPlaceholdersCount == 0) {
+        if (pos != this._dragPlaceholderPos && pos <= numFavorites && this._animatingPlaceholdersCount === 0) {
             this._dragPlaceholderPos = pos;
 
             // Don't allow positioning before or after self
@@ -621,8 +684,8 @@ const NosDash = new Lang.Class({
             }
 
             this._dragPlaceholder = new Dash.DragPlaceholderItem();
-            this._dragPlaceholder.child.set_width (this.iconSize);
-            this._dragPlaceholder.child.set_height (this.iconSize / 2);
+            this._dragPlaceholder.child.set_width (this.iconSize / 2);
+            this._dragPlaceholder.child.set_height (this.iconSize);
             this._box.insert_child_at_index(this._dragPlaceholder,
                                             this._dragPlaceholderPos);
             this._dragPlaceholder.show(fadeIn);
@@ -630,26 +693,30 @@ const NosDash = new Lang.Class({
 
         // Remove the drag placeholder if we are not in the
         // "favorites zone"
-        if (pos > numFavorites)
+        if (pos > numFavorites) {
             this._clearDragPlaceholder();
+        }
 
-        if (!this._dragPlaceholder)
+        if (!this._dragPlaceholder) {
             return DND.DragMotionResult.NO_DROP;
+        }
 
         let srcIsFavorite = (favPos != -1);
 
-        if (srcIsFavorite)
+        if (srcIsFavorite) {
             return DND.DragMotionResult.MOVE_DROP;
+        }
 
         return DND.DragMotionResult.COPY_DROP;
     },
 
     // Draggable target interface
     acceptDrop : function(source, actor, x, y, time) {
+
         let app = Dash.getAppFromSource(source);
 
         // Don't allow favoriting of transient apps
-        if (app == null || app.is_window_backed()) {
+        if (app === null || app.is_window_backed()) {
             return false;
         }
 

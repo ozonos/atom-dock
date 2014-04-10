@@ -1,14 +1,22 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
 
-const Signals = imports.signals;
 const Lang = imports.lang;
+const Mainloop = imports.mainloop;
+const Signals = imports.signals;
+const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
 
 const Main = imports.ui.main;
+const Tweener = imports.ui.tweener;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const NosDash = Me.imports.nosdash;
+
+// This will be on settings scheme
+const ANIMATION_TIME = 0.5;
+const SHOW_DELAY = 0.25;
+const HIDE_DELAY = 0.25;
 
 /* This class handles the dock and intellihide behavior.
  * Heavily inspired from Michele's Dash to Dock extension
@@ -18,15 +26,27 @@ const NosDock = new Lang.Class({
     Name: 'NosDock',
 
     _init: function() {
+
         this._signalHandler = new Convenience.GlobalSignalHandler();
 
         this.dash = new NosDash.NosDash();
         this.forcedOverview = false;
 
+        this.staticBox = new Clutter.ActorBox();
+
+        // initialize animation status object
+        this._animStatus = new AnimationStatus(true);
+
+        // Current autohide status
+        this._autohideStatus = false;
+
         this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
+        this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
         this._box = new St.BoxLayout({ name: 'nosDockBox', reactive: true, track_hover: true,
             style_class: 'box' });
+        this._box.connect("notify::hover", Lang.bind(this, this._hoverChanged));
+
         this.actor = new St.Bin({ name: 'nosDockContainer',reactive: false,
             style_class: 'container', x_align: St.Align.MIDDLE, child: this._box});
 
@@ -54,10 +74,22 @@ const NosDock = new Lang.Class({
                 Main.overview.viewSelector._showAppsButton,
                 'notify::checked',
                 Lang.bind(this, this._syncShowAppsButtonToggled)
-            ]);
+            ],
+            [
+                Main.overview,
+                'showing',
+                Lang.bind(this, this._setTransparent)
+            ],
+            [
+                Main.overview,
+                'hiding',
+                Lang.bind(this, this._unsetTransparent)
+            ]
+        );
     },
 
     _initialize: function() {
+
         if (this._realizeId > 0){
             this.actor.disconnect(this._realizeId);
             this._realizeId = 0;
@@ -74,7 +106,8 @@ const NosDock = new Lang.Class({
     },
 
     _resetPosition: function() {
-        // Get the monitor
+
+        // Get primary monitor to display dock
         this._monitor = Main.layoutManager.primaryMonitor;
 
         this.actor.width = this._monitor.width;
@@ -83,11 +116,28 @@ const NosDock = new Lang.Class({
         this.actor.y = this._monitor.height - this.actor.height;
         this.dash._container.set_width(-1);
 
+        // Update static box location
+        this._updateStaticBox();
+
         // Modify legacy overview each time the dock repositioned
         this._modifyLegacyOverview();
     },
 
+    _updateStaticBox: function() {
+
+        // Init static box in accordance with dock's placement
+        this.staticBox.init_rect(
+            this._monitor.x + this._box.x,
+            this._monitor.height - this._box.height,
+            this._box.width,
+            this._box.height
+        );
+
+        this.emit('box-changed');
+    },
+
     _adjustTheme: function() {
+
         // Prevent shell crash if the actor is not on the stage.
         // It happens enabling/disabling repeatedly the extension
         if(!this.dash._container.get_stage())
@@ -129,7 +179,7 @@ const NosDock = new Lang.Class({
 
         if(selector._showAppsButton.checked !== this.dash.showAppsButton.checked){
 
-            if(this.dash.showAppsButton.checked){
+            if (this.dash.showAppsButton.checked) {
                 if (!Main.overview._shown) {
                     // force entering overview if needed
                     Main.overview.show();
@@ -148,18 +198,21 @@ const NosDock = new Lang.Class({
 
         // whenever the button is unactivated even if not by the user still reset the
         // forcedOverview flag
-        if( this.dash.showAppsButton.checked==false)
+        if( this.dash.showAppsButton.checked === false)
             this.forcedOverview = false;
     },
 
     // Keep ShowAppsButton status in sync with the overview status
     _syncShowAppsButtonToggled: function() {
+
         let status = Main.overview.viewSelector._showAppsButton.checked;
-        if(this.dash.showAppsButton.checked !== status)
+        if (this.dash.showAppsButton.checked !== status) {
             this.dash.showAppsButton.checked = status;
+        }
     },
 
     destroy: function() {
+
         // Disconnect global signals
         this._signalHandler.disconnect();
 
@@ -171,18 +224,257 @@ const NosDock = new Lang.Class({
         this._restoreLegacyOverview();
     },
 
-    setTransparent: function() {
+    _setTransparent: function() {
+
         // Hide left border of dashStyle
         this.dash._container.set_style(this._dashStyle);
         this.dash._container.add_style_class_name('atom-hide-background');
+
+        // force disable auto hide on overview
+        this.disableAutoHide();
     },
 
-    unsetTransparent: function() {
+    _unsetTransparent: function() {
+
         // Show left border of dashStyle
         this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
         this.dash._container.remove_style_class_name('atom-hide-background');
+    },
+
+    _hoverChanged: function() {
+
+        // Skip if dock is not in autohide mode for instance because it is shown
+        // by intellihide. Delay the hover changes check while switching
+        // workspace: the workspaceSwitcherPopup steals the hover status and it
+        // is not restored until the mouse move again (sync_hover has no effect).
+        if (Main.wm._workspaceSwitcherPopup) {
+            Mainloop.timeout_add(500, Lang.bind(this, function() {
+                    this._box.sync_hover();
+                    this._hoverChanged();
+                    return false;
+                }));
+        } else if (this._autohideStatus) {
+            if (this._box.hover) {
+                this._show();
+            } else {
+                this._hide();
+            }
+        }
+    },
+
+    _show: function() {
+
+        var anim = this._animStatus;
+
+        if (this._autohideStatus && (anim.hidden() || anim.hiding())) {
+
+            let delay;
+            // If the dock is hidden, wait this._settings.get_double('show-delay') before showing it;
+            // otherwise show it immediately.
+            if (anim.hidden()) {
+                delay = SHOW_DELAY;
+            } else if (anim.hiding()) {
+                // suppress all potential queued hiding animations (always give priority to show)
+                this._removeAnimations();
+                delay = 0;
+            }
+
+            this.emit('showing');
+            this._animateIn(ANIMATION_TIME, delay);
+        }
+    },
+
+    _hide: function() {
+
+        var anim = this._animStatus;
+
+        // If no hiding animation is running or queued
+        if (this._autohideStatus && (anim.showing() || anim.shown())){
+
+            let delay;
+
+            // If a show is queued but still not started (i.e the mouse was
+            // over the screen  border but then went away, i.e not a sufficient
+            // amount of time is passeed to trigger the dock showing) remove it.
+            if (anim.showing()) {
+                if (anim.running){
+                    //if a show already started, let it finish; queue hide without removing the show.
+                    // to obtain this I increase the delay to avoid the overlap and interference
+                    // between the animations
+                    delay = HIDE_DELAY + 1.2 * ANIMATION_TIME + SHOW_DELAY;
+
+                } else {
+                    this._removeAnimations();
+                    delay = 0;
+                }
+            } else if (anim.shown()) {
+                delay = HIDE_DELAY;
+            }
+
+            this.emit('hiding');
+            this._animateOut(ANIMATION_TIME, delay);
+
+        }
+    },
+
+    _removeAnimations: function() {
+        Tweener.removeTweens(this.actor);
+        this._animStatus.clearAll();
+    },
+
+    _animateIn: function(time, delay) {
+
+        this._animStatus.queue(true);
+        Tweener.addTween(this.actor,{
+            y: this._monitor.height - this.actor.height,
+            time: time,
+            delay: delay,
+            transition: 'easeOutQuad',
+            onStart:  Lang.bind(this, function() {
+                this._animStatus.start();
+            }),
+            onOverwrite : Lang.bind(this, function() { this._animStatus.clear(); }),
+            onComplete: Lang.bind(this, function() {
+                this._animStatus.end(); })
+        });
+    },
+
+    _animateOut: function(time, delay){
+
+        this._animStatus.queue(false);
+        Tweener.addTween(this.actor,{
+            y: this._monitor.height - 5,
+            time: time,
+            delay: delay ,
+            transition: 'easeOutQuad',
+            onStart:  Lang.bind(this, function() {
+                this._animStatus.start();
+            }),
+            onOverwrite : Lang.bind(this, function() { this._animStatus.clear(); }),
+            onComplete: Lang.bind(this, function() {
+                this._animStatus.end();
+            })
+        });
+    },
+
+    // Disable autohide effect, thus show dash
+    disableAutoHide: function() {
+
+        if (this._autohideStatus === true){
+            this._autohideStatus = false;
+
+            this._removeAnimations();
+            this._animateIn(ANIMATION_TIME, 0);
+        }
+    },
+
+    // Enable autohide effect, hide dash
+    enableAutoHide: function() {
+
+        if (this._autohideStatus === false){
+
+            let delay = 0; // immediately fadein background if hide is blocked by mouseover,
+                         // oterwise start fadein when dock is already hidden.
+            this._autohideStatus = true;
+            this._removeAnimations();
+
+            if (this._box.hover === true) {
+                this._box.sync_hover();
+            }
+
+            if (!this._box.hover) {
+                this._animateOut(ANIMATION_TIME, 0);
+                delay = ANIMATION_TIME;
+            } else {
+                delay = 0;
+            }
+        }
     }
 
 });
 
 Signals.addSignalMethods(NosDock.prototype);
+
+/*
+ * Store animation status in a perhaps overcomplicated way.
+ * status is true for visible, false for hidden
+ */
+const AnimationStatus = new Lang.Class({
+    Name: 'AnimationStatus',
+
+    _init: function(initialStatus){
+        this.status = initialStatus;
+        this.nextStatus  = [];
+        this.queued = false;
+        this.running = false;
+    },
+
+    queue: function(nextStatus){
+        this.nextStatus.push(nextStatus);
+        this.queued = true;
+    },
+
+    start: function(){
+        if (this.nextStatus.length == 1) {
+            this.queued = false;
+        }
+        this.running = true;
+    },
+
+    end: function(){
+        if (this.nextStatus.length == 1) {
+            this.queued = false; // in the case end is called and start was not
+        }
+        this.running = false;
+        this.status = this.nextStatus.shift();
+    },
+
+    clear: function(){
+        if (this.nextStatus.length == 1) {
+            this.queued = false;
+            this.running = false;
+        }
+
+        this.nextStatus.splice(0, 1);
+    },
+
+    clearAll: function(){
+        this.queued  = false;
+        this.running = false;
+        this.nextStatus.splice(0, this.nextStatus.length);
+    },
+
+    // Return true if a showing animation is running or queued
+    showing: function(){
+        if ((this.running === true || this.queued === true) && this.nextStatus[0] === true) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+
+    shown: function(){
+        if (this.status === true && !(this.queued || this.running)) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+
+    // Return true if an hiding animation is running or queued
+    hiding: function(){
+        if ((this.running === true || this.queued === true) && this.nextStatus[0] === false) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+
+    hidden: function(){
+        if (this.status === false && !(this.queued || this.running)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+});
