@@ -23,8 +23,8 @@ let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
-const NosAppIcon = new Lang.Class({
-    Name: 'NosAppIcon',
+const AtomAppIcon = new Lang.Class({
+    Name: 'AtomAppIcon',
     Extends: AppDisplay.AppIcon,
 
     _init : function(app, iconParams) {
@@ -77,10 +77,10 @@ const NosAppIcon = new Lang.Class({
         return this.app.is_on_workspace(global.screen.get_active_workspace());
     }
 });
-Signals.addSignalMethods(NosAppIcon.prototype);
+Signals.addSignalMethods(AtomAppIcon.prototype);
 
-const NosDashItemContainer = new Lang.Class({
-    Name: 'NosDashItemContainer',
+const AtomDashItemContainer = new Lang.Class({
+    Name: 'AtomDashItemContainer',
     Extends: Dash.DashItemContainer,
 
     _init: function() {
@@ -125,8 +125,8 @@ const NosDashItemContainer = new Lang.Class({
  * Heavily inspired from Michele's Dash to Dock extension
  * https://github.com/micheleg/dash-to-dock
  */
-const NosDashActor = new Lang.Class({
-    Name: 'NosDashActor',
+const AtomDashActor = new Lang.Class({
+    Name: 'AtomDashActor',
     Extends: St.Widget,
 
     _init: function() {
@@ -182,8 +182,8 @@ const NosDashActor = new Lang.Class({
  * Heavily inspired from Michele's Dash to Dock extension
  * https://github.com/micheleg/dash-to-dock
  */
-const NosDash = new Lang.Class({
-    Name: 'NosDash',
+const AtomDash = new Lang.Class({
+    Name: 'AtomDash',
 
     _init: function() {
 
@@ -202,7 +202,7 @@ const NosDash = new Lang.Class({
         this._resetHoverTimeoutId = 0;
         this._labelShowing = false;
 
-        this._container = new NosDashActor();
+        this._container = new AtomDashActor();
         this._box = new St.BoxLayout({ vertical: false,
                                        clip_to_allocation: true });
         this._box._delegate = this;
@@ -369,7 +369,7 @@ const NosDash = new Lang.Class({
 
     _createAppItem: function(app) {
 
-        let appIcon = new NosAppIcon(app,
+        let appIcon = new AtomAppIcon(app,
                                      { setSizeManually: true,
                                        showLabel: false });
         appIcon._draggable.connect('drag-begin',
@@ -385,7 +385,7 @@ const NosDash = new Lang.Class({
                             this._itemMenuStateChanged(item, opened);
                         }));
 
-        let item = new NosDashItemContainer();
+        let item = new AtomDashItemContainer();
         item.setChild(appIcon.actor);
 
         // Override default AppIcon label_actor, now the
@@ -538,7 +538,7 @@ const NosDash = new Lang.Class({
                                transition: 'easeOutQuad',
                              });
         }
-        // Moved event emitter in the end for NosDock resetPosition event
+        // Moved event emitter in the end for AtomDock resetPosition event
         this.emit('icon-size-changed');
     },
 
@@ -829,4 +829,4 @@ const NosDash = new Lang.Class({
     }
 
 });
-Signals.addSignalMethods(NosDash.prototype);
+Signals.addSignalMethods(AtomDash.prototype);
