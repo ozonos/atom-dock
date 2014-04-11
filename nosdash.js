@@ -23,6 +23,35 @@ let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
+const NosAppIcon = new Lang.Class({
+    Name: 'NosAppIcon',
+    Extends: AppDisplay.AppIcon,
+
+    _init : function(app, iconParams) {
+        this.parent(app, iconParams);
+    },
+
+    _onActivate: function (event) {
+        this.emit('launching');
+        let modifiers = event.get_state();
+
+        if ((modifiers & Clutter.ModifierType.CONTROL_MASK &&
+                    this.app.state == Shell.AppState.RUNNING) ||
+            !this._isAppOnActiveWorkspace()) {
+            this.app.open_new_window(-1);
+        } else {
+            this.app.activate();
+        }
+
+        Main.overview.hide();
+    },
+
+    _isAppOnActiveWorkspace: function() {
+        return this.app.is_on_workspace(global.screen.get_active_workspace());
+    }
+});
+Signals.addSignalMethods(NosAppIcon.prototype);
+
 const NosDashItemContainer = new Lang.Class({
     Name: 'NosDashItemContainer',
     Extends: Dash.DashItemContainer,
@@ -175,6 +204,11 @@ const NosDash = new Lang.Class({
         this._appSystem = Shell.AppSystem.get_default();
 
         this._signalHandler.push(
+            // [
+            //     global.screen,
+            //     'workspace-switched',
+            //     Lang.bind(this, this._queueRedisplay)
+            // ],
             [
                 this._appSystem,
                 'installed-changed',
@@ -308,9 +342,9 @@ const NosDash = new Lang.Class({
 
     _createAppItem: function(app) {
 
-        let appIcon = new AppDisplay.AppIcon(app,
-                                             { setSizeManually: true,
-                                               showLabel: false });
+        let appIcon = new NosAppIcon(app,
+                                     { setSizeManually: true,
+                                       showLabel: false });
         appIcon._draggable.connect('drag-begin',
                                    Lang.bind(this, function() {
                                        appIcon.actor.opacity = 50;
@@ -759,5 +793,4 @@ const NosDash = new Lang.Class({
     }
 
 });
-
 Signals.addSignalMethods(NosDash.prototype);
