@@ -29,6 +29,8 @@ const NosAppIcon = new Lang.Class({
 
     _init : function(app, iconParams) {
         this.parent(app, iconParams);
+        this._windowsChangedId = this.app.connect('windows-changed',
+            Lang.bind(this, this._onWindowsChanged));
     },
 
     _onActivate: function (event) {
@@ -44,6 +46,31 @@ const NosAppIcon = new Lang.Class({
         }
 
         Main.overview.hide();
+    },
+
+    _onStateChanged: function() {
+        this._checkRunning();
+    },
+
+    _onWindowsChanged: function() {
+        this._checkRunning();
+    },
+
+    _checkRunning: function() {
+
+        if (this.app.state != Shell.AppState.STOPPED &&
+            this._isAppOnActiveWorkspace()) {
+            this.actor.add_style_class_name('running');
+        } else {
+            this.actor.remove_style_class_name('running');
+        }
+    },
+
+    _onDestroy: function() {
+        if (this._windowsChangedId > 0)
+            this.app.disconnect(this._windowsChangedId);
+        this._windowsChangedId = 0;
+        this.parent();
     },
 
     _isAppOnActiveWorkspace: function() {
@@ -469,12 +496,14 @@ const NosDash = new Lang.Class({
 
         let newIconSize = 24;
         for (let i = 0; i < iconSizes.length; i++) {
-            if (iconSizes[i] <= availSize)
+            if (iconSizes[i] <= availSize) {
                 newIconSize = iconSizes[i];
+            }
         }
 
-        if (newIconSize == this.iconSize)
+        if (newIconSize == this.iconSize) {
             return;
+        }
 
         let oldIconSize = this.iconSize;
         this.iconSize = newIconSize;
@@ -531,8 +560,11 @@ const NosDash = new Lang.Class({
         // Apps supposed to be in the dash
         let newApps = [];
 
-        for (let id in favorites)
+        for (let id in favorites) {
             newApps.push(favorites[id]);
+            // Notify favorite apps to check if it's on the active workspace
+            favorites[id].notify('state');
+        }
 
         for (let i = 0; i < running.length; i++) {
             let app = running[i];
@@ -619,10 +651,11 @@ const NosDash = new Lang.Class({
 
             // Don't animate item removal when the overview is transitioning
             // or hidden
-            if (Main.overview.visible && !Main.overview.animationInProgress)
+            if (Main.overview.visible && !Main.overview.animationInProgress) {
                 item.animateOutAndDestroy();
-            else
+            } else {
                 item.destroy();
+            }
         }
 
         this._adjustIconSize();
@@ -633,8 +666,9 @@ const NosDash = new Lang.Class({
         let animate = this._shownInitially && Main.overview.visible &&
             !Main.overview.animationInProgress;
 
-        if (!this._shownInitially)
+        if (!this._shownInitially) {
             this._shownInitially = true;
+        }
 
         for (let i = 0; i < addedItems.length; i++) {
             addedItems[i].item.show(animate);
