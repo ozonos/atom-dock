@@ -23,6 +23,63 @@ let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
+const AtomAppIcon = new Lang.Class({
+    Name: 'AtomAppIcon',
+    Extends: AppDisplay.AppIcon,
+
+    _init : function(app, iconParams) {
+        this.parent(app, iconParams);
+        this._windowsChangedId = this.app.connect('windows-changed',
+            Lang.bind(this, this._onWindowsChanged));
+    },
+
+    _onActivate: function (event) {
+        this.emit('launching');
+        let modifiers = event.get_state();
+
+        if (!this._isAppOnActiveWorkspace() ||
+            (modifiers & Clutter.ModifierType.CONTROL_MASK &&
+                    this.app.state == Shell.AppState.RUNNING)) {
+            this.app.open_new_window(-1);
+        } else {
+            this.app.activate();
+        }
+
+        Main.overview.hide();
+    },
+
+    _onStateChanged: function() {
+        this._checkRunning();
+    },
+
+    _onWindowsChanged: function() {
+        this._checkRunning();
+    },
+
+    _checkRunning: function() {
+
+        if (this.app.state != Shell.AppState.STOPPED &&
+            this._isAppOnActiveWorkspace()) {
+            this.actor.add_style_class_name('running');
+        } else {
+            this.actor.remove_style_class_name('running');
+        }
+    },
+
+    _onDestroy: function() {
+        if (this._windowsChangedId > 0) {
+            this.app.disconnect(this._windowsChangedId);
+        }
+        this._windowsChangedId = 0;
+        this.parent();
+    },
+
+    _isAppOnActiveWorkspace: function() {
+        return this.app.is_on_workspace(global.screen.get_active_workspace());
+    }
+});
+Signals.addSignalMethods(AtomAppIcon.prototype);
+
 const AtomDashItemContainer = new Lang.Class({
     Name: 'AtomDashItemContainer',
     Extends: Dash.DashItemContainer,
@@ -176,6 +233,11 @@ const AtomDash = new Lang.Class({
 
         this._signalHandler.push(
             [
+                global.screen,
+                'workspace-switched',
+                Lang.bind(this, this._queueRedisplay)
+            ],
+            [
                 this._appSystem,
                 'installed-changed',
                 Lang.bind(this, function() {
@@ -308,9 +370,9 @@ const AtomDash = new Lang.Class({
 
     _createAppItem: function(app) {
 
-        let appIcon = new AppDisplay.AppIcon(app,
-                                             { setSizeManually: true,
-                                               showLabel: false });
+        let appIcon = new AtomAppIcon(app,
+                                     { setSizeManually: true,
+                                       showLabel: false });
         appIcon._draggable.connect('drag-begin',
                                    Lang.bind(this, function() {
                                        appIcon.actor.opacity = 50;
@@ -435,12 +497,14 @@ const AtomDash = new Lang.Class({
 
         let newIconSize = 24;
         for (let i = 0; i < iconSizes.length; i++) {
-            if (iconSizes[i] <= availSize)
+            if (iconSizes[i] <= availSize) {
                 newIconSize = iconSizes[i];
+            }
         }
 
-        if (newIconSize == this.iconSize)
+        if (newIconSize == this.iconSize) {
             return;
+        }
 
         let oldIconSize = this.iconSize;
         this.iconSize = newIconSize;
@@ -497,13 +561,18 @@ const AtomDash = new Lang.Class({
         // Apps supposed to be in the dash
         let newApps = [];
 
-        for (let id in favorites)
+        for (let id in favorites) {
             newApps.push(favorites[id]);
+            // Notify favorite apps to check if it's on the active workspace
+            favorites[id].notify('state');
+        }
 
         for (let i = 0; i < running.length; i++) {
             let app = running[i];
-            if (app.get_id() in favorites)
+            if (app.get_id() in favorites ||
+                !app.is_on_workspace(global.screen.get_active_workspace())) {
                 continue;
+            }
             newApps.push(app);
         }
 
@@ -583,10 +652,11 @@ const AtomDash = new Lang.Class({
 
             // Don't animate item removal when the overview is transitioning
             // or hidden
-            if (Main.overview.visible && !Main.overview.animationInProgress)
+            if (Main.overview.visible && !Main.overview.animationInProgress) {
                 item.animateOutAndDestroy();
-            else
+            } else {
                 item.destroy();
+            }
         }
 
         this._adjustIconSize();
@@ -597,8 +667,9 @@ const AtomDash = new Lang.Class({
         let animate = this._shownInitially && Main.overview.visible &&
             !Main.overview.animationInProgress;
 
-        if (!this._shownInitially)
+        if (!this._shownInitially) {
             this._shownInitially = true;
+        }
 
         for (let i = 0; i < addedItems.length; i++) {
             addedItems[i].item.show(animate);
@@ -759,5 +830,4 @@ const AtomDash = new Lang.Class({
     }
 
 });
-
 Signals.addSignalMethods(AtomDash.prototype);
