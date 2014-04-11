@@ -11,7 +11,7 @@ const Tweener = imports.ui.tweener;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
-const NosDash = Me.imports.nosdash;
+const AtomDash = Me.imports.atomdash;
 
 // This will be on settings scheme
 const ANIMATION_TIME = 0.3;
@@ -22,14 +22,14 @@ const HIDE_DELAY = 0.25;
  * Heavily inspired from Michele's Dash to Dock extension
  * https://github.com/micheleg/dash-to-dock
  */
-const NosDock = new Lang.Class({
-    Name: 'NosDock',
+const AtomDock = new Lang.Class({
+    Name: 'AtomDock',
 
     _init: function() {
 
         this._signalHandler = new Convenience.GlobalSignalHandler();
 
-        this.dash = new NosDash.NosDash();
+        this.dash = new AtomDash.AtomDash();
         this.forcedOverview = false;
 
         this.staticBox = new Clutter.ActorBox();
@@ -43,11 +43,11 @@ const NosDock = new Lang.Class({
         this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
         this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
-        this._box = new St.BoxLayout({ name: 'nosDockBox', reactive: true, track_hover: true,
+        this._box = new St.BoxLayout({ name: 'atomDockBox', reactive: true, track_hover: true,
             style_class: 'box' });
         this._box.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
-        this.actor = new St.Bin({ name: 'nosDockContainer',reactive: false,
+        this.actor = new St.Bin({ name: 'atomDockContainer',reactive: false,
             style_class: 'container', x_align: St.Align.MIDDLE, child: this._box});
 
         // Hide the dock while setting position and theme
@@ -402,7 +402,7 @@ const NosDock = new Lang.Class({
 
 });
 
-Signals.addSignalMethods(NosDock.prototype);
+Signals.addSignalMethods(AtomDock.prototype);
 
 /*
  * Store animation status in a perhaps overcomplicated way.

@@ -83,7 +83,7 @@ function getSettings(schema) {
 
 // try to simplify global signals handling
 const GlobalSignalHandler = new Lang.Class({
-    Name: 'NosDock.GlobalSignalHandler',
+    Name: 'AtomDock.GlobalSignalHandler',
 
     _init: function(){
         this._signals = {};

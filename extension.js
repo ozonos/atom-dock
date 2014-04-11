@@ -4,6 +4,9 @@
  *
  * Extension's version: 0.2.1
  *
+ * 0.2.2 Changes:
+ *  - changed all nos-prefixes to atom
+ *
  * 0.2.1 Changes:
  *  - change GnomeDash to Lang Class
  *  - fixed drag and drop behavior
@@ -39,10 +42,10 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const GnomeDash = Me.imports.gnomedash;
 const Intellihide = Me.imports.intellihide;
-const NosDock = Me.imports.nosdock;
+const AtomDock = Me.imports.atomdock;
 
 let oldDash;
-let nosDock;
+let atomDock;
 let intellihide;
 
 function init() {
@@ -50,11 +53,11 @@ function init() {
 }
 
 function show() {
-    nosDock.disableAutoHide();
+    atomDock.disableAutoHide();
 }
 
 function hide() {
-    nosDock.enableAutoHide();
+    atomDock.enableAutoHide();
 }
 
 function enable() {
@@ -63,13 +66,13 @@ function enable() {
     oldDash.hideDash();
 
     // Enable new dock
-    nosDock = new NosDock.NosDock();
-    intellihide = new Intellihide.Intellihide(show, hide, nosDock);
+    atomDock = new AtomDock.AtomDock();
+    intellihide = new Intellihide.Intellihide(show, hide, atomDock);
 }
 
 function disable() {
 
     intellihide.destroy();
-    nosDock.destroy();
+    atomDock.destroy();
     oldDash.showDash();
 }
