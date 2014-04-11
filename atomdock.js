@@ -165,7 +165,7 @@ const AtomDock = new Lang.Class({
         let themeNode = this.dash._container.get_theme_node();
         let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
         let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
-        let borderRadius = themeNode.get_border_radius(St.Corner.BOTTOMRIGHT);
+        let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
         // We're "swapping" bottom border and bottom-right corner styles to left and top-left corner
         let newStyle = 'border-bottom: none;' +
