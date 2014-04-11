@@ -88,7 +88,7 @@ const AtomDock = new Lang.Class({
             [
                 Main.overview,
                 'hiding',
-                Lang.bind(this, this._unsetTransparent)
+                Lang.bind(this, this._setOpaque)
             ]
         );
     },
@@ -102,6 +102,9 @@ const AtomDock = new Lang.Class({
 
         // Adjust dock theme to match global theme
         this._adjustTheme();
+        
+        // Set the default dock style
+        this._setOpaque();
 
         // Set initial position
         this._resetPosition();
@@ -240,13 +243,13 @@ const AtomDock = new Lang.Class({
         this._restoreLegacyOverview();
     },
 
-    _setTransparent: function() {
-        this.dash._container.add_style_pseudo_class('overview');
-        this.disableAutoHide();
+    _setOpaque: function() {
+        this.dash._container.add_style_pseudo_class('desktop');
     },
 
-    _unsetTransparent: function() {
-        this.dash._container.remove_style_pseudo_class('overview');
+    _setTransparent: function() {
+        this.dash._container.remove_style_pseudo_class('desktop');
+        this.disableAutoHide();
     },
 
     _hoverChanged: function() {
