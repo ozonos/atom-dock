@@ -14,3 +14,8 @@ local:
 
 	#Copy new contents in
 	cp -rf . $(INSTALLDIR)
+
+uninstall:
+	#Uninstall atom-dock
+	-rm -rf $(INSTALLDIR)
+
