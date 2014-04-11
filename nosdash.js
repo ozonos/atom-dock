@@ -204,11 +204,11 @@ const NosDash = new Lang.Class({
         this._appSystem = Shell.AppSystem.get_default();
 
         this._signalHandler.push(
-            // [
-            //     global.screen,
-            //     'workspace-switched',
-            //     Lang.bind(this, this._queueRedisplay)
-            // ],
+            [
+                global.screen,
+                'workspace-switched',
+                Lang.bind(this, this._queueRedisplay)
+            ],
             [
                 this._appSystem,
                 'installed-changed',
@@ -536,8 +536,10 @@ const NosDash = new Lang.Class({
 
         for (let i = 0; i < running.length; i++) {
             let app = running[i];
-            if (app.get_id() in favorites)
+            if (app.get_id() in favorites ||
+                !app.is_on_workspace(global.screen.get_active_workspace())) {
                 continue;
+            }
             newApps.push(app);
         }
 
