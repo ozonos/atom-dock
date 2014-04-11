@@ -71,6 +71,11 @@ const NosDock = new Lang.Class({
                 Lang.bind(this, this._resetPosition)
             ],
             [
+                St.ThemeContext.get_for_stage(global.stage),
+                'changed',
+                Lang.bind(this, this._onThemeChanged)
+            ],
+            [
                 Main.overview.viewSelector._showAppsButton,
                 'notify::checked',
                 Lang.bind(this, this._syncShowAppsButtonToggled)
@@ -136,25 +141,35 @@ const NosDock = new Lang.Class({
         this.emit('box-changed');
     },
 
+    _onThemeChanged: function() {
+
+        this.dash._queueRedisplay();
+        this._adjustTheme();
+        this._resetPosition();
+    },
+
     _adjustTheme: function() {
 
         // Prevent shell crash if the actor is not on the stage.
         // It happens enabling/disabling repeatedly the extension
-        if(!this.dash._container.get_stage())
+        if (!this.dash._container.get_stage()) {
             return;
+        }
+
+        // Remove prior style edits
+        this.dash._container.set_style(null);
 
         let themeNode = this.dash._container.get_theme_node();
         let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
         let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
         let borderRadius = themeNode.get_border_radius(St.Corner.BOTTOMRIGHT);
 
-        // Set dashStyle to reuse on setTransparent
-        this._dashStyle = 'border-bottom: none;' +
-            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;';
-        this._dashStyleLeftBorder =
+        // We're "swapping" bottom border and bottom-right corner styles to left and top-left corner
+        let newStyle = 'border-bottom: none;' +
+            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
             'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
 
-        this.dash._container.set_style(this._dashStyle + this._dashStyleLeftBorder);
+        this.dash._container.set_style(newStyle);
     },
 
     _modifyLegacyOverview: function() {
@@ -177,7 +192,7 @@ const NosDock = new Lang.Class({
 
         let selector = Main.overview.viewSelector;
 
-        if(selector._showAppsButton.checked !== this.dash.showAppsButton.checked){
+        if (selector._showAppsButton.checked !== this.dash.showAppsButton.checked) {
 
             if (this.dash.showAppsButton.checked) {
                 if (!Main.overview._shown) {
@@ -198,8 +213,9 @@ const NosDock = new Lang.Class({
 
         // whenever the button is unactivated even if not by the user still reset the
         // forcedOverview flag
-        if( this.dash.showAppsButton.checked === false)
+        if (this.dash.showAppsButton.checked === false) {
             this.forcedOverview = false;
+        }
     },
 
     // Keep ShowAppsButton status in sync with the overview status
@@ -327,7 +343,8 @@ const NosDock = new Lang.Class({
             }),
             onOverwrite : Lang.bind(this, function() { this._animStatus.clear(); }),
             onComplete: Lang.bind(this, function() {
-                this._animStatus.end(); })
+                this._animStatus.end();
+            })
         });
     },
 
