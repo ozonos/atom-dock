@@ -37,9 +37,9 @@ const AtomAppIcon = new Lang.Class({
         this.emit('launching');
         let modifiers = event.get_state();
 
-        if ((modifiers & Clutter.ModifierType.CONTROL_MASK &&
-                    this.app.state == Shell.AppState.RUNNING) ||
-            !this._isAppOnActiveWorkspace()) {
+        if (!this._isAppOnActiveWorkspace() ||
+            (modifiers & Clutter.ModifierType.CONTROL_MASK &&
+                    this.app.state == Shell.AppState.RUNNING)) {
             this.app.open_new_window(-1);
         } else {
             this.app.activate();
@@ -67,8 +67,9 @@ const AtomAppIcon = new Lang.Class({
     },
 
     _onDestroy: function() {
-        if (this._windowsChangedId > 0)
+        if (this._windowsChangedId > 0) {
             this.app.disconnect(this._windowsChangedId);
+        }
         this._windowsChangedId = 0;
         this.parent();
     },
