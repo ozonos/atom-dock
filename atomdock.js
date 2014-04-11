@@ -121,7 +121,7 @@ const AtomDock = new Lang.Class({
         this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
         this.actor.x_align = St.Align.MIDDLE;
-        this.actor.y = this._monitor.height - this.actor.height;
+        this.actor.y = this._monitor.y + this._monitor.height - this.actor.height;
         this.dash._container.set_width(-1);
 
         // Update static box location
@@ -136,7 +136,7 @@ const AtomDock = new Lang.Class({
         // Init static box in accordance with dock's placement
         this.staticBox.init_rect(
             this._monitor.x + this._box.x,
-            this._monitor.height - this._box.height,
+            this._monitor.y + this._monitor.height - this._box.height,
             this._box.width,
             this._box.height
         );
