@@ -46,7 +46,6 @@
  *  - check behavior on multiple monitor
  *  - add settings schema
  *  - implement workspace button
- *  - implement app per workspace
  *
  */
 

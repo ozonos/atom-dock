@@ -30,7 +30,7 @@ const AtomAppIcon = new Lang.Class({
 
         if (!this._isAppOnActiveWorkspace() ||
             (modifiers & Clutter.ModifierType.CONTROL_MASK &&
-                    this.app.state == Shell.AppState.RUNNING)) {
+                    this.app.state === Shell.AppState.RUNNING)) {
             this.app.open_new_window(-1);
         } else {
             this.app.activate();
@@ -49,7 +49,7 @@ const AtomAppIcon = new Lang.Class({
 
     _checkRunning: function() {
 
-        if (this.app.state != Shell.AppState.STOPPED &&
+        if (this.app.state !== Shell.AppState.STOPPED &&
             this._isAppOnActiveWorkspace()) {
             this.actor.add_style_class_name('running');
         } else {
@@ -189,10 +189,10 @@ const AtomAppIconMenu = new Lang.Class({
         if (child._window) {
             let metaWindow = child._window;
             this.emit('activate-window', metaWindow);
-        } else if (child == this._newWindowMenuItem) {
+        } else if (child === this._newWindowMenuItem) {
             this._source.app.open_new_window(-1);
             this.emit('activate-window', null);
-        } else if (child == this._toggleFavoriteMenuItem) {
+        } else if (child === this._toggleFavoriteMenuItem) {
             let favs = AppFavorites.getAppFavorites();
             let isFavorite = favs.isFavorite(this._source.app.get_id());
             if (isFavorite) {
