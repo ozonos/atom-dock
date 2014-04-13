@@ -196,24 +196,24 @@ const Intellihide = new Lang.Class({
             if (windows.length > 0) {
 
                 // This is the window on top of all others in the current workspace
-                let topWindow = windows[windows.length-1].get_meta_window();
+                let topWindow = windows[windows.length - 1].get_meta_window();
                 // If there isn't a focused app, use that of the window on top
                 this._focusApp = this._tracker.focus_app || this._tracker.get_window_app(topWindow);
 
                 windows = windows.filter(this._intellihideFilterInteresting, this);
 
-                for (let i = 0; i< windows.length; i++) {
+                for (let i = 0; i < windows.length; i++) {
 
                     let win = windows[i].get_meta_window();
-                    if(win){
+                    if (win) {
                         let rect = win.get_outer_rect();
 
-                        let test = ( rect.x < this._target.staticBox.x2) &&
-                        ( rect.x +rect.width > this._target.staticBox.x1 ) &&
-                        ( rect.y < this._target.staticBox.y2 ) &&
-                        ( rect.y +rect.height > this._target.staticBox.y1 );
+                        let test = (rect.x < this._target.staticBox.x2) &&
+                                (rect.x +rect.width > this._target.staticBox.x1) &&
+                                (rect.y < this._target.staticBox.y2) &&
+                                (rect.y +rect.height > this._target.staticBox.y1);
 
-                        if (test){
+                        if (test) {
                             overlaps = true;
                             break;
                         }
@@ -240,8 +240,9 @@ const Intellihide = new Lang.Class({
             return false;
         }
 
-        if (!this._handledWindow(meta_win))
+        if (!this._handledWindow(meta_win)) {
             return false;
+        }
 
         var wksp = meta_win.get_workspace();
         var wksp_index = wksp.index();

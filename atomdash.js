@@ -189,8 +189,7 @@ const AtomDash = new Lang.Class({
     _init: function() {
 
         this._signalHandler = new Convenience.GlobalSignalHandler();
-        // 75% of monitor width as icon size adjustment threshold
-        this._monitorWidth = Math.floor(Main.layoutManager.primaryMonitor.width * 0.75);
+        this._monitorWidth = this._getMonitorWidth();
 
         this._maxWidth = -1;
         this.iconSize = 64;
@@ -234,6 +233,14 @@ const AtomDash = new Lang.Class({
         this._signalHandler.push(
             [
                 global.screen,
+                'monitors-changed',
+                Lang.bind(this, function() {
+                    this._monitorWidth = this._getMonitorWidth();
+                    this._queueRedisplay();
+                })
+            ],
+            [
+                global.screen,
                 'workspace-switched',
                 Lang.bind(this, this._queueRedisplay)
             ],
@@ -271,10 +278,12 @@ const AtomDash = new Lang.Class({
                 Lang.bind(this, this._onDragCancelled)
             ]
         );
+    },
 
-        // Translators: this is the name of the dock/favorites area on
-        // the left of the overview
-        Main.ctrlAltTabManager.addGroup(this.actor, _("Dash"), 'user-bookmarks-symbolic');
+    _getMonitorWidth: function() {
+
+        // 75% of monitor width as icon size adjustment threshold
+        return Math.floor(Main.layoutManager.primaryMonitor.width * 0.75);
     },
 
     destroy: function() {
@@ -801,14 +810,17 @@ const AtomDash = new Lang.Class({
         let children = this._box.get_children();
         for (let i = 0; i < this._dragPlaceholderPos; i++) {
             if (this._dragPlaceholder &&
-                children[i] == this._dragPlaceholder)
+                children[i] == this._dragPlaceholder) {
                 continue;
+            }
 
             let childId = children[i].child._delegate.app.get_id();
-            if (childId == id)
+            if (childId == id) {
                 continue;
-            if (childId in favorites)
+            }
+            if (childId in favorites) {
                 favPos++;
+            }
         }
 
         // No drag placeholder means we don't wan't to favorite the app
@@ -819,10 +831,11 @@ const AtomDash = new Lang.Class({
         Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
             function () {
                 let appFavorites = AppFavorites.getAppFavorites();
-                if (srcIsFavorite)
+                if (srcIsFavorite) {
                     appFavorites.moveFavoriteToPos(id, favPos);
-                else
+                } else {
                     appFavorites.addFavoriteAtPos(id, favPos);
+                }
                 return false;
             }));
 
