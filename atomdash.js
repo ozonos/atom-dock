@@ -8,7 +8,6 @@ const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const St = imports.gi.St;
 
-const AppDisplay = imports.ui.appDisplay;
 const AppFavorites = imports.ui.appFavorites;
 const Dash = imports.ui.dash;
 const DND = imports.ui.dnd;
@@ -17,69 +16,16 @@ const Tweener = imports.ui.tweener;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
+const AtomAppDisplay = Me.imports.atomappdisplay;
 
 let DASH_ANIMATION_TIME = Dash.DASH_ANIMATION_TIME;
 let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
-const AtomAppIcon = new Lang.Class({
-    Name: 'AtomAppIcon',
-    Extends: AppDisplay.AppIcon,
-
-    _init : function(app, iconParams) {
-        this.parent(app, iconParams);
-        this._windowsChangedId = this.app.connect('windows-changed',
-            Lang.bind(this, this._onWindowsChanged));
-    },
-
-    _onActivate: function (event) {
-        this.emit('launching');
-        let modifiers = event.get_state();
-
-        if (!this._isAppOnActiveWorkspace() ||
-            (modifiers & Clutter.ModifierType.CONTROL_MASK &&
-                    this.app.state == Shell.AppState.RUNNING)) {
-            this.app.open_new_window(-1);
-        } else {
-            this.app.activate();
-        }
-
-        Main.overview.hide();
-    },
-
-    _onStateChanged: function() {
-        this._checkRunning();
-    },
-
-    _onWindowsChanged: function() {
-        this._checkRunning();
-    },
-
-    _checkRunning: function() {
-
-        if (this.app.state != Shell.AppState.STOPPED &&
-            this._isAppOnActiveWorkspace()) {
-            this.actor.add_style_class_name('running');
-        } else {
-            this.actor.remove_style_class_name('running');
-        }
-    },
-
-    _onDestroy: function() {
-        if (this._windowsChangedId > 0) {
-            this.app.disconnect(this._windowsChangedId);
-        }
-        this._windowsChangedId = 0;
-        this.parent();
-    },
-
-    _isAppOnActiveWorkspace: function() {
-        return this.app.is_on_workspace(global.screen.get_active_workspace());
-    }
-});
-Signals.addSignalMethods(AtomAppIcon.prototype);
-
+/* This class is a extension of the upstream DashItemContainer class (ui.dash.js).
+ * Changes are done to make label shows on top side.
+ */
 const AtomDashItemContainer = new Lang.Class({
     Name: 'AtomDashItemContainer',
     Extends: Dash.DashItemContainer,
@@ -90,8 +36,9 @@ const AtomDashItemContainer = new Lang.Class({
 
     showLabel: function() {
 
-        if (!this._labelText)
+        if (!this._labelText) {
             return;
+        }
 
         this.label.set_text(this._labelText);
         this.label.opacity = 0;
@@ -118,10 +65,12 @@ const AtomDashItemContainer = new Lang.Class({
                            time: DASH_ITEM_LABEL_SHOW_TIME,
                            transition: 'easeOutQuad',
                          });
-
     }
 });
 
+/* This class is a extension of the upstream ShowAppsIcon class (ui.dash.js).
+ * Changes are done to make label shows on top side.
+ */
 const AtomShowAppsIcon = new Lang.Class({
     Name: 'AtomShowAppsIcon',
     Extends: Dash.ShowAppsIcon,
@@ -132,8 +81,9 @@ const AtomShowAppsIcon = new Lang.Class({
 
     showLabel: function() {
 
-        if (!this._labelText)
+        if (!this._labelText) {
             return;
+        }
 
         this.label.set_text(this._labelText);
         this.label.opacity = 0;
@@ -421,7 +371,7 @@ const AtomDash = new Lang.Class({
 
     _createAppItem: function(app) {
 
-        let appIcon = new AtomAppIcon(app,
+        let appIcon = new AtomAppDisplay.AtomAppIcon(app,
                                      { setSizeManually: true,
                                        showLabel: false });
         appIcon._draggable.connect('drag-begin',
@@ -851,15 +801,13 @@ const AtomDash = new Lang.Class({
         let favPos = 0;
         let children = this._box.get_children();
         for (let i = 0; i < this._dragPlaceholderPos; i++) {
-            if (this._dragPlaceholder &&
-                children[i] == this._dragPlaceholder) {
+            let childId = children[i].child._delegate.app.get_id();
+            if (childId === id ||
+                (this._dragPlaceholder &&
+                    children[i] === this._dragPlaceholder)) {
                 continue;
             }
 
-            let childId = children[i].child._delegate.app.get_id();
-            if (childId == id) {
-                continue;
-            }
             if (childId in favorites) {
                 favPos++;
             }
