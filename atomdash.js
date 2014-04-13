@@ -122,6 +122,48 @@ const AtomDashItemContainer = new Lang.Class({
     }
 });
 
+const AtomShowAppsIcon = new Lang.Class({
+    Name: 'AtomShowAppsIcon',
+    Extends: Dash.ShowAppsIcon,
+
+    _init: function() {
+        this.parent();
+    },
+
+    showLabel: function() {
+
+        if (!this._labelText)
+            return;
+
+        this.label.set_text(this._labelText);
+        this.label.opacity = 0;
+        this.label.show();
+
+        let [stageX, stageY] = this.get_transformed_position();
+
+        let labelHeight = this.label.get_height();
+        let labelWidth = this.label.get_width();
+
+        let node = this.label.get_theme_node();
+        let yOffset = node.get_length('-x-offset'); // borrowing from x-offset
+
+        let y = stageY - labelHeight - yOffset;
+
+        let itemWidth = this.allocation.x2 - this.allocation.x1;
+        let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+
+        let x = stageX + xOffset;
+
+        this.label.set_position(x, y);
+        Tweener.addTween(this.label,
+                         { opacity: 255,
+                           time: DASH_ITEM_LABEL_SHOW_TIME,
+                           transition: 'easeOutQuad',
+                         });
+
+    }
+});
+
 /* This class is a fork of the upstream DashActor class (ui.dash.js).
  * Heavily inspired from Michele's Dash to Dock extension
  * https://github.com/micheleg/dash-to-dock
@@ -208,7 +250,7 @@ const AtomDash = new Lang.Class({
         this._box._delegate = this;
         this._container.add_actor(this._box);
 
-        this._showAppsIcon = new Dash.ShowAppsIcon();
+        this._showAppsIcon = new AtomShowAppsIcon();
         this._showAppsIcon.childScale = 1;
         this._showAppsIcon.childOpacity = 255;
         this._showAppsIcon.icon.setIconSize(this.iconSize);

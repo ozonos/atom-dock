@@ -6,6 +6,7 @@
  *
  * 0.3.1 Changes:
  *  - Fixed invisible box which prevent clicking even when dock is hidden
+ *  - Show Applications label now on top of dock
  *
  * 0.3 Changes:
  *  - implemented per-workspace-app behavior
