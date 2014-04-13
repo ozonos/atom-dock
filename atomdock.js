@@ -389,7 +389,7 @@ const AtomDock = new Lang.Class({
         });
     },
 
-    _animateOut: function(time, delay){
+    _animateOut: function(time, delay) {
 
         this._animStatus.queue(false);
         Tweener.addTween(this.actor, {
@@ -410,7 +410,7 @@ const AtomDock = new Lang.Class({
     // Disable autohide effect, thus show dash
     disableAutoHide: function() {
 
-        if (this._autohideStatus === true){
+        if (this._autohideStatus === true) {
             this._autohideStatus = false;
 
             this._removeAnimations();
@@ -421,7 +421,7 @@ const AtomDock = new Lang.Class({
     // Enable autohide effect, hide dash
     enableAutoHide: function() {
 
-        if (this._autohideStatus === false){
+        if (this._autohideStatus === false) {
 
             let delay = 0; // immediately fadein background if hide is blocked by mouseover,
                          // oterwise start fadein when dock is already hidden.
@@ -442,7 +442,6 @@ const AtomDock = new Lang.Class({
     }
 
 });
-
 Signals.addSignalMethods(AtomDock.prototype);
 
 /*

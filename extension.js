@@ -2,9 +2,19 @@
 
 /* Numix/Ozon Project 2014
  *
- * Extension's version: 0.2.1
+ * Extension's version: 0.3.1
+ *
+ * 0.3.1 Changes:
+ *  - Fixed invisible box which prevent clicking even when dock is hidden
+ *
+ * 0.3 Changes:
+ *  - implemented per-workspace-app behavior
+ *  - reverse design direction from using :overview to use :desktop pseudo class
+ *  - added option to uninstall with "make uninstall"
  *
  * 0.2.2 Changes:
+ *  - add pseudo class :overview
+ *  - added theme handling when gnome-shell theme changed
  *  - changed all nos-prefixes to atom
  *
  * 0.2.1 Changes:
