@@ -157,13 +157,13 @@ const AtomDock = new Lang.Class({
         this.actor.x_align = St.Align.MIDDLE;
         this._updateYPosition();
         this.dash._container.set_width(-1);
-
-        // Modify legacy overview each time the dock repositioned
-        this._modifyLegacyOverview();
     },
 
     _updateYPosition: function() {
         this.actor.y = this._monitor.y + this._monitor.height - this._box.height;
+
+        // Modify legacy overview each time the dock repositioned
+        this._modifyLegacyOverview();
     },
 
     _updateStaticBox: function() {
@@ -212,12 +212,12 @@ const AtomDock = new Lang.Class({
 
     _modifyLegacyOverview: function() {
         // Set legacy overview bottom padding
-        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this.actor.height + 'px;');
+        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this._box.height + 'px;');
     },
 
     _restoreLegacyOverview: function() {
         // Remove legacy overview bottom padding
-        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this.actor.height + 'px;');
+        Main.overview.viewSelector.actor.set_style(null);
     },
 
     _onShowAppsButtonToggled: function() {
