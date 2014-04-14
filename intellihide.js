@@ -25,7 +25,7 @@ const handledWindowTypes = [
  * https://github.com/micheleg/dash-to-dock
  *
  * A rough and ugly implementation of the intellihide behaviour.
- * Intallihide object: call show()/hide() function based on the overlap with the
+ * Intellihide object: call show()/hide() function based on the overlap with the
  * the target actor object;
  *
  * Target object has to contain a Clutter.ActorBox object named staticBox and

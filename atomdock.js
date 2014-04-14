@@ -95,7 +95,7 @@ const AtomDock = new Lang.Class({
         this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
         // Reset position when icon size changed
-        this.dash.connect('icon-size-changed', Lang.bind(this, this._resetPosition));
+        this.dash.connect('icon-size-changed', Lang.bind(this, this._updateYPosition));
 
         // sync hover after a popupmenu is closed
         this.dash.connect('menu-closed', Lang.bind(this,
@@ -133,7 +133,7 @@ const AtomDock = new Lang.Class({
 
         // Adjust dock theme to match global theme
         this._adjustTheme();
-        
+
         // Set the default dock style
         this._setOpaque();
 
@@ -155,11 +155,15 @@ const AtomDock = new Lang.Class({
         this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
         this.actor.x_align = St.Align.MIDDLE;
-        this.actor.y = this._monitor.y + this._monitor.height - this._box.height;
+        this._updateYPosition();
         this.dash._container.set_width(-1);
 
         // Modify legacy overview each time the dock repositioned
         this._modifyLegacyOverview();
+    },
+
+    _updateYPosition: function() {
+        this.actor.y = this._monitor.y + this._monitor.height - this._box.height;
     },
 
     _updateStaticBox: function() {
