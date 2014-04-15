@@ -85,15 +85,14 @@ const AtomDock = new Lang.Class({
                 Main.messageTray,
                 'hiding',
                 Lang.bind(this, function(){
-					this._show();
+					this.disableAutoHide();
 					})
             ],
             [
                 Main.messageTray,
                 'showing',
                 Lang.bind(this, function(){
-					this.autohideStatus = true;
-					this.forcedOverview = false;
+					this.enableAutoHide();
 					this._hide();
 					})
             ]
