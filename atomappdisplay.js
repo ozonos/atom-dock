@@ -109,15 +109,12 @@ const AtomAppIconMenu = new Lang.Class({
 
         this._source = source;
 
-        this.connect('activate', Lang.bind(this, this._onActivate));
-
         this.actor.add_style_class_name('app-well-menu');
 
         // Chain our visibility and lifecycle to that of the source
         source.actor.connect('notify::mapped', Lang.bind(this, function () {
-            if (!source.actor.mapped) {
+            if (!source.actor.mapped)
                 this.close();
-            }
         }));
         source.actor.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
 
@@ -128,7 +125,7 @@ const AtomAppIconMenu = new Lang.Class({
         this.removeAll();
 
         let windows = this._source.app.get_windows().filter(function(w) {
-            return Shell.WindowTracker.is_window_interesting(w);
+            return !w.skip_taskbar;
         });
 
         // Display the app windows menu items and the separator between windows
@@ -137,26 +134,54 @@ const AtomAppIconMenu = new Lang.Class({
         let separatorShown = windows.length > 0 && windows[0].get_workspace() != activeWorkspace;
 
         for (let i = 0; i < windows.length; i++) {
-            if (!separatorShown && windows[i].get_workspace() != activeWorkspace) {
+            let window = windows[i];
+            if (!separatorShown && window.get_workspace() != activeWorkspace) {
                 this._appendSeparator();
                 separatorShown = true;
             }
-            let item = this._appendMenuItem(windows[i].title);
-            item._window = windows[i];
+            let item = this._appendMenuItem(window.title);
+            item.connect('activate', Lang.bind(this, function() {
+                this.emit('activate-window', window);
+            }));
         }
 
         if (!this._source.app.is_window_backed()) {
-            if (windows.length > 0) {
-                this._appendSeparator();
+            this._appendSeparator();
+
+            this._newWindowMenuItem = this._appendMenuItem(_("New Window"));
+            this._newWindowMenuItem.connect('activate', Lang.bind(this, function() {
+                this._source.app.open_new_window(-1);
+                this.emit('activate-window', null);
+            }));
+            this._appendSeparator();
+
+            let appInfo = this._source.app.get_app_info();
+            let actions = appInfo.list_actions();
+            for (let i = 0; i < actions.length; i++) {
+                let action = actions[i];
+                let item = this._appendMenuItem(appInfo.get_action_name(action));
+                item.connect('activate', Lang.bind(this, function(emitter, event) {
+                    this._source.app.launch_action(action, event.get_time(), -1);
+                    this.emit('activate-window', null);
+                }));
             }
+            this._appendSeparator();
 
             let isFavorite = AppFavorites.getAppFavorites().isFavorite(this._source.app.get_id());
 
-            this._newWindowMenuItem = this._appendMenuItem(_("New Window"));
-            this._appendSeparator();
-
-            this._toggleFavoriteMenuItem = this._appendMenuItem(isFavorite ? _("Remove from Favorites")
-                                                                : _("Add to Favorites"));
+            if (isFavorite) {
+                let item = this._appendMenuItem(_("Remove from Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.removeFavorite(this._source.app.get_id());
+                }));
+            } else {
+                let item = this._appendMenuItem(_("Add to Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.addFavorite(this._source.app.get_id());
+                }));
+            }
         }
     },
 
@@ -175,25 +200,6 @@ const AtomAppIconMenu = new Lang.Class({
     popup: function(activatingButton) {
         this._redisplay();
         this.open();
-    },
-
-    _onActivate: function (actor, child) {
-        if (child._window) {
-            let metaWindow = child._window;
-            this.emit('activate-window', metaWindow);
-        } else if (child === this._newWindowMenuItem) {
-            this._source.app.open_new_window(-1);
-            this.emit('activate-window', null);
-        } else if (child === this._toggleFavoriteMenuItem) {
-            let favs = AppFavorites.getAppFavorites();
-            let isFavorite = favs.isFavorite(this._source.app.get_id());
-            if (isFavorite) {
-                favs.removeFavorite(this._source.app.get_id());
-            } else {
-                favs.addFavorite(this._source.app.get_id());
-            }
-        }
-        this.close();
     }
 });
 Signals.addSignalMethods(AtomAppIconMenu.prototype);
