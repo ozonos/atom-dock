@@ -1,6 +1,6 @@
 {
 	"shell-version": ["3.10", "3.12"],
-	"uuid": "atom-dock@numixproject.org",
-	"name": "Atom dock",
-	"description": "Custom dock for Atom desktop"
+	"uuid": "atom-dock@ozonos.org",
+	"name": "Atom Dock",
+	"description": "Custom Dock for Ozon Desktop"
 }
