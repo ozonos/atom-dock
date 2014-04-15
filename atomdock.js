@@ -92,7 +92,7 @@ const AtomDock = new Lang.Class({
         this.actor.connect('notify::allocation',
             Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
 
-        // this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
+        this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
         // Reset position when icon size changed
         this.dash.connect('icon-size-changed', Lang.bind(this, this._updateYPosition));
@@ -116,7 +116,7 @@ const AtomDock = new Lang.Class({
         this._box.add_actor(this.dash.actor);
 
         Main.uiGroup.add_child(this.actor);
-        Main.layoutManager._trackActor(this._box, { trackFullscreen: true, affectsStruts: false });
+        Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
         //Main.layoutManager._trackActor(this.dash._box, { affectsStruts: true });
 
         // pretend this._box is isToplevel child so that fullscreen is actually tracked
