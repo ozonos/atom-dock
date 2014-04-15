@@ -4,6 +4,7 @@ const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Signals = imports.signals;
 const Clutter = imports.gi.Clutter;
+const Gtk = imports.gi.Gtk;
 const St = imports.gi.St;
 
 const Main = imports.ui.main;
@@ -27,43 +28,33 @@ const AtomDock = new Lang.Class({
 
     _init: function() {
 
-        this._signalHandler = new Convenience.GlobalSignalHandler();
-
-        this.dash = new AtomDash.AtomDash();
-        this.forcedOverview = false;
-
-        this.staticBox = new Clutter.ActorBox();
-
         // initialize animation status object
         this._animStatus = new AnimationStatus(true);
 
         // Current autohide status
         this._autohideStatus = false;
 
-        this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
-        this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
+        // Overview shown status
+        this.forcedOverview = false;
 
-        this._box = new St.BoxLayout({ name: 'atomDockBox', reactive: true, track_hover: true,
-            style_class: 'box' });
+        // Put dock on the primary monitor
+        this._monitor = Main.layoutManager.primaryMonitor;
+
+        // Used to store dock position for intellihide checking
+        this.staticBox = new Clutter.ActorBox();
+
+        // Create dash
+        this.dash = new AtomDash.AtomDash();
+        this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
+
+        this.actor = new St.Bin({ name: 'atomDockContainer', reactive: false,
+            x_align: St.Align.MIDDLE });
+        this.actor._delegate = this;
+
+        this._box = new St.BoxLayout({ name: 'atomDockBox', reactive: true, track_hover: true });
         this._box.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
-        this.actor = new St.Bin({ name: 'atomDockContainer',reactive: false,
-            style_class: 'container', x_align: St.Align.MIDDLE, child: this._box});
-
-        // Hide the dock while setting position and theme
-        this.actor.set_opacity(0);
-
-        this._realizeId = this.actor.connect('realize', Lang.bind(this, this._initialize));
-
-        this._box.add_actor(this.dash.actor);
-
-        // Reset position when icon size changed
-        this.dash.connect('icon-size-changed', Lang.bind(this, this._resetPosition));
-
-        Main.uiGroup.add_child(this.actor);
-        Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
-        Main.layoutManager._trackActor(this.dash._box, { affectsStruts: false });
-
+        this._signalHandler = new Convenience.GlobalSignalHandler();
         this._signalHandler.push(
             [
                 global.screen,
@@ -91,18 +82,58 @@ const AtomDock = new Lang.Class({
                 Lang.bind(this, this._setOpaque)
             ]
         );
+
+        // Hide the dock while setting position and theme
+        this.actor.set_opacity(0);
+
+        // Since the actor is not a topLevel child and its parent is now not added to the Chrome,
+        // the allocation change of the parent container (slide in and slideout) doesn't trigger
+        // anymore an update of the input regions. Force the update manually.
+        this.actor.connect('notify::allocation',
+            Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
+
+        this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
+
+        // Reset position when icon size changed
+        this.dash.connect('icon-size-changed', Lang.bind(this, this._updateYPosition));
+
+        // sync hover after a popupmenu is closed
+        this.dash.connect('menu-closed', Lang.bind(this,
+            function() {
+                this._box.sync_hover();
+            }));
+
+        // Dash accessibility
+        Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dash"), 'user-bookmarks-symbolic',
+            { focusCallback: Lang.bind(this, this._onAccessibilityFocus) });
+
+        // Delay operations that require the shell to be fully loaded and with
+        // user theme applied.
+        this._realizeId = this.actor.connect('realize', Lang.bind(this, this._initialize));
+
+        // Add dash container actor and the container to the Chrome
+        this.actor.set_child(this._box);
+        this._box.add_actor(this.dash.actor);
+
+        Main.uiGroup.add_child(this.actor);
+        Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
+        //Main.layoutManager._trackActor(this.dash._box, { affectsStruts: true });
+
+        // pretend this._box is isToplevel child so that fullscreen is actually tracked
+        let index = Main.layoutManager._findActor(this._box);
+        Main.layoutManager._trackedActors[index].isToplevel = true;
     },
 
     _initialize: function() {
 
-        if (this._realizeId > 0){
+        if (this._realizeId > 0) {
             this.actor.disconnect(this._realizeId);
             this._realizeId = 0;
         }
 
         // Adjust dock theme to match global theme
         this._adjustTheme();
-        
+
         // Set the default dock style
         this._setOpaque();
 
@@ -118,14 +149,18 @@ const AtomDock = new Lang.Class({
         // Get primary monitor to display dock
         this._monitor = Main.layoutManager.primaryMonitor;
 
+        // Update static box location
+        this._updateStaticBox();
+
         this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
         this.actor.x_align = St.Align.MIDDLE;
-        this.actor.y = this._monitor.y + this._monitor.height - this.actor.height;
+        this._updateYPosition();
         this.dash._container.set_width(-1);
+    },
 
-        // Update static box location
-        this._updateStaticBox();
+    _updateYPosition: function() {
+        this.actor.y = this._monitor.y + this._monitor.height - this._box.height;
 
         // Modify legacy overview each time the dock repositioned
         this._modifyLegacyOverview();
@@ -177,12 +212,12 @@ const AtomDock = new Lang.Class({
 
     _modifyLegacyOverview: function() {
         // Set legacy overview bottom padding
-        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this.actor.height + 'px;');
+        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this._box.height + 'px;');
     },
 
     _restoreLegacyOverview: function() {
         // Remove legacy overview bottom padding
-        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this.actor.height + 'px;');
+        Main.overview.viewSelector.actor.set_style(null);
     },
 
     _onShowAppsButtonToggled: function() {
@@ -228,6 +263,13 @@ const AtomDock = new Lang.Class({
         if (this.dash.showAppsButton.checked !== status) {
             this.dash.showAppsButton.checked = status;
         }
+    },
+
+    // Show the dock and give focus to it
+    _onAccessibilityFocus: function() {
+
+        this._box.navigate_focus(null, Gtk.DirectionType.TAB_FORWARD, false);
+        this._animateIn(ANIMATION_TIME, 0);
     },
 
     destroy: function() {
@@ -336,8 +378,8 @@ const AtomDock = new Lang.Class({
     _animateIn: function(time, delay) {
 
         this._animStatus.queue(true);
-        Tweener.addTween(this.actor,{
-            y: this._monitor.height - this.actor.height,
+        Tweener.addTween(this.actor, {
+            y: this._monitor.y + this._monitor.height - this._box.height,
             time: time,
             delay: delay,
             transition: 'easeOutQuad',
@@ -351,13 +393,13 @@ const AtomDock = new Lang.Class({
         });
     },
 
-    _animateOut: function(time, delay){
+    _animateOut: function(time, delay) {
 
         this._animStatus.queue(false);
-        Tweener.addTween(this.actor,{
-            y: this._monitor.height - 5,
+        Tweener.addTween(this.actor, {
+            y: this._monitor.y + this._monitor.height - 5,
             time: time,
-            delay: delay ,
+            delay: delay,
             transition: 'easeOutQuad',
             onStart:  Lang.bind(this, function() {
                 this._animStatus.start();
@@ -372,7 +414,7 @@ const AtomDock = new Lang.Class({
     // Disable autohide effect, thus show dash
     disableAutoHide: function() {
 
-        if (this._autohideStatus === true){
+        if (this._autohideStatus === true) {
             this._autohideStatus = false;
 
             this._removeAnimations();
@@ -383,7 +425,7 @@ const AtomDock = new Lang.Class({
     // Enable autohide effect, hide dash
     enableAutoHide: function() {
 
-        if (this._autohideStatus === false){
+        if (this._autohideStatus === false) {
 
             let delay = 0; // immediately fadein background if hide is blocked by mouseover,
                          // oterwise start fadein when dock is already hidden.
@@ -404,7 +446,6 @@ const AtomDock = new Lang.Class({
     }
 
 });
-
 Signals.addSignalMethods(AtomDock.prototype);
 
 /*
