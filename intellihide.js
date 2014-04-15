@@ -185,7 +185,7 @@ const Intellihide = new Lang.Class({
         this._updateDockVisibility();
     },
 
-    _switchWorkspace: function(shellwm, from, to, direction) {
+    _switchWorkspace: function() {
         this._updateDockVisibility();
     },
 

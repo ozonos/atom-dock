@@ -8,6 +8,7 @@
  *  - Fixed invisible box which prevent clicking even when dock is hidden
  *  - Show Applications label is now on top of dock
  *  - Icons' popup menu is now on top of dock
+ *  - Fix Y position bug when switching workspace between docks with different icon size
  *
  * 0.3 Changes:
  *  - implemented per-workspace-app behavior
@@ -42,7 +43,10 @@
  *  - convert indentation to spaces, added emacs header line
  *
  * TODO(s):
- *  - use different name for NosDash?
+ *  - bug on each initialization, dock stuck not hiding until hovered out
+ *  - add animation of adding-removing app icon on redisplay and only shows that
+ *    animation when dock is not hidden
+ *  - app label only shows when animation not running (see #18)
  *  - check behavior on multiple monitor
  *  - add settings schema
  *  - implement workspace button
