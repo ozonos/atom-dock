@@ -182,6 +182,7 @@ const AtomDash = new Lang.Class({
 
         this._signalHandler = new Convenience.GlobalSignalHandler();
         this._monitorWidth = this._getMonitorWidth();
+        this._workspaceSwitched = false;
 
         this._maxWidth = -1;
         this.iconSize = 64;
@@ -234,7 +235,11 @@ const AtomDash = new Lang.Class({
             [
                 global.screen,
                 'workspace-switched',
-                Lang.bind(this, this._queueRedisplay)
+                Lang.bind(this, function() {
+                    // Placeholder variable to tell redisplay that this is workspace switched event
+                    this._workspaceSwitched = true;
+                    this._queueRedisplay();
+                })
             ],
             [
                 this._appSystem,
@@ -305,8 +310,9 @@ const AtomDash = new Lang.Class({
 
     _onDragEnd: function() {
 
-        if (this._dragCancelled)
+        if (this._dragCancelled) {
             return;
+        }
 
         this._endDrag();
     },
@@ -322,19 +328,22 @@ const AtomDash = new Lang.Class({
     _onDragMotion: function(dragEvent) {
 
         let app = Dash.getAppFromSource(dragEvent.source);
-        if (app === null)
+        if (app === null) {
             return DND.DragMotionResult.CONTINUE;
+        }
 
         let showAppsHovered =
                 this._showAppsIcon.contains(dragEvent.targetActor);
 
-        if (!this._box.contains(dragEvent.targetActor) || showAppsHovered)
+        if (!this._box.contains(dragEvent.targetActor) || showAppsHovered) {
             this._clearDragPlaceholder();
+        }
 
-        if (showAppsHovered)
+        if (showAppsHovered) {
             this._showAppsIcon.setDragApp(app);
-        else
+        } else {
             this._showAppsIcon.setDragApp(null);
+        }
 
         return DND.DragMotionResult.CONTINUE;
     },
@@ -342,8 +351,9 @@ const AtomDash = new Lang.Class({
     _appIdListToHash: function(apps) {
 
         let ids = {};
-        for (let i = 0; i < apps.length; i++)
+        for (let i = 0; i < apps.length; i++) {
             ids[apps[i].get_id()] = apps[i];
+        }
         return ids;
     },
 
@@ -677,6 +687,12 @@ const AtomDash = new Lang.Class({
         // Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=692744
         // Without it, StBoxLayout may use a stale size cache
         this._box.queue_relayout();
+
+        // On workspace-switched event, emit this to trigger intellihide check
+        if (this._workspaceSwitched) {
+            this._workspaceSwitched = false;
+            this.emit('redisplay-workspace-switched');
+        }
     },
 
     _clearDragPlaceholder: function() {

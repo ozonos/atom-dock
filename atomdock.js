@@ -92,7 +92,7 @@ const AtomDock = new Lang.Class({
         this.actor.connect('notify::allocation',
             Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
 
-        this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
+        // this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
         // Reset position when icon size changed
         this.dash.connect('icon-size-changed', Lang.bind(this, this._updateYPosition));

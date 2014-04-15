@@ -63,6 +63,13 @@ const Intellihide = new Lang.Class({
                 'box-changed',
                 Lang.bind(this, this._updateDockVisibility)
             ],
+            // Subscribe to dash redisplay-workspace-switched event which emitted
+            // after dash finish redisplay specifically on workspace-switched event.
+            [
+                this._target.dash,
+                'redisplay-workspace-switched',
+                Lang.bind(this, this._switchWorkspace)
+            ],
             // Add timeout when window grab-operation begins and remove it when it ends.
             // These signals only exist starting from Gnome-Shell 3.4
             [
@@ -86,17 +93,11 @@ const Intellihide = new Lang.Class({
                 'unmaximize',
                 Lang.bind(this, this._updateDockVisibility)
             ],
-            // Probably this is also included in restacked?
-            [
-                global.window_manager,
-                'switch-workspace',
-                Lang.bind(this, this._switchWorkspace)
-            ],
-            // trigggered for instance when a window is closed (also during switch-workspace).
+            // trigggered for instance when a window is changed (also during switch-workspace).
             [
                 global.screen,
                 'restacked',
-                Lang.bind(this, this._updateDockVisibility)
+                Lang.bind(this, this._windowRestacked)
             ],
             // Set visibility in overview mode
             [
@@ -186,6 +187,15 @@ const Intellihide = new Lang.Class({
 
     _switchWorkspace: function(shellwm, from, to, direction) {
         this._updateDockVisibility();
+    },
+
+    _windowRestacked: function() {
+
+        // Skip update dock on workspace switch, because we need that to be handled by
+        // _switchWorkspace
+        if (Main.wm._workspaceSwitcherPopup === null) {
+            this._updateDockVisibility();
+        }
     },
 
     _updateDockVisibility: function() {
