@@ -121,12 +121,12 @@ const AtomDock = new Lang.Class({
 
         // pretend this._box is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._box);
-        Main.layoutManager._trackedActors[index].isToplevel = true ;
+        Main.layoutManager._trackedActors[index].isToplevel = true;
     },
 
     _initialize: function() {
 
-        if (this._realizeId > 0){
+        if (this._realizeId > 0) {
             this.actor.disconnect(this._realizeId);
             this._realizeId = 0;
         }

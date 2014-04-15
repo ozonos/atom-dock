@@ -92,7 +92,7 @@ const Intellihide = new Lang.Class({
                 'switch-workspace',
                 Lang.bind(this, this._switchWorkspace)
             ],
-            // trigggered for instance when a window is closed.
+            // trigggered for instance when a window is closed (also during switch-workspace).
             [
                 global.screen,
                 'restacked',

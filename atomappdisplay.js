@@ -21,7 +21,7 @@ const AtomAppIcon = new Lang.Class({
     _init : function(app, iconParams) {
         this.parent(app, iconParams);
         this._windowsChangedId = this.app.connect('windows-changed',
-            Lang.bind(this, this._onWindowsChanged));
+            Lang.bind(this, this._onStateChanged));
     },
 
     _onActivate: function (event) {
@@ -40,14 +40,6 @@ const AtomAppIcon = new Lang.Class({
     },
 
     _onStateChanged: function() {
-        this._checkRunning();
-    },
-
-    _onWindowsChanged: function() {
-        this._checkRunning();
-    },
-
-    _checkRunning: function() {
 
         if (this.app.state !== Shell.AppState.STOPPED &&
             this._isAppOnActiveWorkspace()) {

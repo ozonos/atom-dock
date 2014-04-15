@@ -544,7 +544,7 @@ const AtomDash = new Lang.Class({
         this.emit('icon-size-changed');
     },
 
-    _redisplay: function () {
+    _redisplay: function() {
 
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
@@ -564,8 +564,6 @@ const AtomDash = new Lang.Class({
 
         for (let id in favorites) {
             newApps.push(favorites[id]);
-            // Notify favorite apps to check if it's on the active workspace
-            favorites[id].notify('state');
         }
 
         for (let i = 0; i < running.length; i++) {
