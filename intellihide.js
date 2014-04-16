@@ -36,7 +36,7 @@ const handledWindowTypes = [
 const Intellihide = new Lang.Class({
     Name: 'Intellihide',
 
-    _init: function(show, hide, target) {
+    _init: function(show,hide,target) {
         this._signalHandler = new Convenience.GlobalSignalHandler();
         this._tracker = Shell.WindowTracker.get_default();
         this._focusApp = null;
@@ -132,7 +132,6 @@ const Intellihide = new Lang.Class({
                 'showing',
                 Lang.bind(this, function(){
 					this._target.enableAutoHide();
-					//this._hide(true);
 					this._target._hide();
 					this._updateDockVisibility();
 				})

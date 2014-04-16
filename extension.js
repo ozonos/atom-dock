@@ -82,7 +82,7 @@ function enable() {
 
     // Enable new dock
     atomDock = new AtomDock.AtomDock();
-    intellihide = new Intellihide.Intellihide(show,hide, atomDock);
+    intellihide = new Intellihide.Intellihide(show,hide,atomDock);
 }
 
 function disable() {
