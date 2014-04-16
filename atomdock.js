@@ -19,6 +19,8 @@ const ANIMATION_TIME = 0.3;
 const SHOW_DELAY = 0.25;
 const HIDE_DELAY = 0.25;
 
+const ATOM_KEYBINDINGS_SCHEMA = 'org.gnome.shell.extensions.atom-dock';
+
 /* This class handles the dock and intellihide behavior.
  * Heavily inspired from Michele's Dash to Dock extension
  * https://github.com/micheleg/dash-to-dock
@@ -122,6 +124,13 @@ const AtomDock = new Lang.Class({
         // pretend this._box is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._box);
         Main.layoutManager._trackedActors[index].isToplevel = true;
+        
+        Main.wm.addKeybinding('toggle-dock-visibility',
+                              new Gio.Settings({ schema: ATOM_DOCK_KEYBINDINGS_SCHEMA }),
+                              Meta.KeyBindingFlags.NONE,
+                              Shell.KeyBindingMode.NORMAL,
+                              Lang.bind(this, this._toggleDockVisibility));
+
     },
 
     _initialize: function() {
@@ -369,6 +378,9 @@ const AtomDock = new Lang.Class({
 
         }
     },
+    _toggleDockVisibility: function(){
+		this._show();		
+		},
 
     _removeAnimations: function() {
         Tweener.removeTweens(this.actor);
