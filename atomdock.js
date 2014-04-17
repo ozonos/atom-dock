@@ -6,9 +6,6 @@ const Signals = imports.signals;
 const Clutter = imports.gi.Clutter;
 const Gtk = imports.gi.Gtk;
 const St = imports.gi.St;
-const Gio = imports.gi.Gio;
-const Meta = imports.gi.Meta;
-const Shell = imports.gi.Shell;
 
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
@@ -100,7 +97,7 @@ const AtomDock = new Lang.Class({
 						Main.layoutManager.overviewGroup.remove_child(this.actor);
 						global.window_group.add_child(this.actor);
 						this._box.sync_hover();
-						/*After sync hover has executed the Dock will lose it's focused App
+						/*After sync hover has executed the Dock will lose its focused App
 						 * maybe we can grab that again without the user even noticing it?*/
 					})
             ]
@@ -113,7 +110,7 @@ const AtomDock = new Lang.Class({
         // the allocation change of the parent container (slide in and slideout) doesn't trigger
         // anymore an update of the input regions. Force the update manually.
         this.actor.connect('notify::allocation',
-            Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
+        Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
 
         this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
@@ -124,7 +121,7 @@ const AtomDock = new Lang.Class({
         this.dash.connect('menu-closed', Lang.bind(this,
             function() {
                 this._box.sync_hover();
-            }));
+        }));
 
         // Dash accessibility
         Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dock"), 'user-bookmarks-symbolic',
@@ -224,7 +221,7 @@ const AtomDock = new Lang.Class({
         // It happens enabling/disabling repeatedly the extension
         if (!this.dash._container.get_stage()) {
             return;
-        }
+		}
 
         // Remove prior style edits
         this.dash._container.set_style(null);
