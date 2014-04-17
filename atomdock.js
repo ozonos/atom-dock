@@ -118,10 +118,7 @@ const AtomDock = new Lang.Class({
         this.dash.connect('icon-size-changed', Lang.bind(this, this._updateYPosition));
 
         // sync hover after a popupmenu is closed
-        this.dash.connect('menu-closed', Lang.bind(this,
-            function() {
-                this._box.sync_hover();
-        }));
+        this.dash.connect('menu-closed', Lang.bind(this, this._box.sync_hover));
 
         // Dash accessibility
         Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dock"), 'user-bookmarks-symbolic',
@@ -145,13 +142,11 @@ const AtomDock = new Lang.Class({
 		
 
         Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
-        //Main.layoutManager._trackActor(this.dash._box, { affectsStruts: true });
-
+        
         // pretend this._box is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._box);
         Main.layoutManager._trackedActors[index].isToplevel = true;
-       
-		    },
+	},
 
     _initialize: function() {
 
@@ -404,7 +399,7 @@ const AtomDock = new Lang.Class({
         this._animStatus.clearAll();
     },
 
-    _animateIn: function(time, delay) {
+   _animateIn: function(time, delay) {
 
         this._animStatus.queue(true);
         Tweener.addTween(this.actor, {
