@@ -115,26 +115,6 @@ const Intellihide = new Lang.Class({
                 global.screen,
                 'monitors-changed',
                 Lang.bind(this, this._updateDockVisibility)
-            ],
-            [
-                Main.messageTray,
-                'hiding',
-                Lang.bind(this, function(){
-					if(Main.overview._shown){
-						this._target.disableAutoHide();
-						this._target.forcedOverview = true;
-						}
-					this._updateDockVisibility();
-					})
-            ],
-            [
-                Main.messageTray,
-                'showing',
-                Lang.bind(this, function(){
-					this._target.enableAutoHide();
-					this._target._hide();
-					this._updateDockVisibility();
-				})
             ]
         );
 

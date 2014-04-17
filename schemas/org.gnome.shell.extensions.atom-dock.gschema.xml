@@ -2,7 +2,7 @@
 <schemalist>
   <schema path="/org/gnome/shell/extensions/atom-dock/" id="org.gnome.shell.extensions.atom-dock">
     <key type="as" name="toggle-dock-visibility">
-       <default>["<Super>D"]</default>
+       <default>["&lt;Super&gt;d"]</default>
        <summary>Toggle Dock</summary>
        <description>Toggles the visibility of Atom Dock</description>
     </key>
