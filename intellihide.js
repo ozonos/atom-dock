@@ -36,7 +36,7 @@ const handledWindowTypes = [
 const Intellihide = new Lang.Class({
     Name: 'Intellihide',
 
-    _init: function(show, hide, target) {
+    _init: function(show,hide,target) {
         this._signalHandler = new Convenience.GlobalSignalHandler();
         this._tracker = Shell.WindowTracker.get_default();
         this._focusApp = null;
