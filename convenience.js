@@ -1,4 +1,6 @@
 /* -*- mode: js; js-basic-offset: 4; indent-tabs-mode: nil -*- */
+/*jshint esnext: true */
+/*jshint indent: 4 */
 
 /*
  * Taken from Michele's Dash to Dock extension
@@ -100,7 +102,6 @@ const GlobalSignalHandler = new Lang.Class({
     },
 
     pushWithLabel: function(label /* plus unlimited 3-long array arguments*/) {
-
         // skip first element of thearguments array;
         let elements = [];
         for (let i = 1 ; i< arguments.length; i++) {

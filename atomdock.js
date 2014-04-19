@@ -1,4 +1,6 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
+/*jshint esnext: true */
+/*jshint indent: 4 */
 
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
@@ -45,13 +47,23 @@ const AtomDock = new Lang.Class({
 
         // Create dash
         this.dash = new AtomDash.AtomDash();
-        this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
+        this.dash.showAppsButton.connect('notify::checked',
+                Lang.bind(this, this._onShowAppsButtonToggled));
 
-        this.actor = new St.Bin({ name: 'atomDockContainer', reactive: false,
-            x_align: St.Align.MIDDLE });
+        this.actor = new St.Bin({
+            name: 'atomDockContainer',
+            reactive: false,
+            x_align: St.Align.MIDDLE
+        });
+
         this.actor._delegate = this;
 
-        this._box = new St.BoxLayout({ name: 'atomDockBox', reactive: true, track_hover: true });
+        this._box = new St.BoxLayout({
+            name: 'atomDockBox',
+            reactive: true,
+            track_hover: true
+        });
+
         this._box.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
         this._signalHandler = new Convenience.GlobalSignalHandler();
@@ -74,13 +86,14 @@ const AtomDock = new Lang.Class({
             [
                 Main.overview,
                 'showing',
-                Lang.bind(this, function(){
-					this._setTransparent();
-					/* Switch actor group to ensure Dock gets shifted up in overview*/
-					global.window_group.remove_child(this.actor);
-					Main.layoutManager.overviewGroup.add_child(this.actor);
-					this._box.sync_hover();
-					})
+                Lang.bind(this, function() {
+                    this._setTransparent();
+                    /* Switch actor group to ensure
+                     * Dock gets shifted up in overview*/
+                    global.window_group.remove_child(this.actor);
+                    Main.layoutManager.overviewGroup.add_child(this.actor);
+                    this._box.sync_hover();
+                })
             ],
             [
                 Main.overview,
@@ -90,63 +103,76 @@ const AtomDock = new Lang.Class({
             [
                 Main.overview,
                 'hidden',
-                Lang.bind(this, function(){
-						/* Switch actor groups after Overview has closed 
-						 * to ensure Dock gets shifted up in Desktop View
-						 * without making it look bumpy */
-						Main.layoutManager.overviewGroup.remove_child(this.actor);
-						global.window_group.add_child(this.actor);
-						this._box.sync_hover();
-						/*After sync hover has executed the Dock will lose its focused App
-						 * maybe we can grab that again without the user even noticing it?*/
-					})
+                Lang.bind(this, function() {
+                    /* Switch actor groups after Overview has closed 
+                     * to ensure Dock gets shifted up in Desktop View
+                     * without making it look bumpy */
+                    Main.layoutManager.overviewGroup.remove_child(this.actor);
+                    global.window_group.add_child(this.actor);
+                    this._box.sync_hover();
+                    /*After sync hover has executed the Dock will lose its
+                     * focused App maybe we can grab that again without the user
+                     * even noticing it?*/
+                })
             ]
         );
 
         // Hide the dock while setting position and theme
         this.actor.set_opacity(0);
 
-        // Since the actor is not a topLevel child and its parent is now not added to the Chrome,
-        // the allocation change of the parent container (slide in and slideout) doesn't trigger
-        // anymore an update of the input regions. Force the update manually.
+        /* Since the actor is not a topLevel child and its parent is now not
+         * added to the Chrome, the allocation change of the parent container
+         * (slide in and slideout) doesn't trigger anymore an update of the
+         * input regions. Force the update manually.
+         */
         this.actor.connect('notify::allocation',
-        Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
+            Lang.bind(Main.layoutManager,
+                Main.layoutManager._queueUpdateRegions
+        ));
 
-        this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
+        this.dash._container.connect('allocation-changed',
+            Lang.bind(this, this._updateStaticBox)
+        );
 
         // Reset position when icon size changed
-        this.dash.connect('icon-size-changed', Lang.bind(this, this._updateYPosition));
+        this.dash.connect('icon-size-changed',
+            Lang.bind(this, this._updateYPosition)
+        );
 
         // sync hover after a popupmenu is closed
         this.dash.connect('menu-closed', Lang.bind(this, this._box.sync_hover));
 
         // Dash accessibility
-        Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dock"), 'user-bookmarks-symbolic',
-            { focusCallback: Lang.bind(this, this._onAccessibilityFocus) });
+        Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dock"),
+            'user-bookmarks-symbolic',
+            { focusCallback: Lang.bind(this, this._onAccessibilityFocus) }
+        );
 
-        // Delay operations that require the shell to be fully loaded and with
-        // user theme applied.
-        this._realizeId = this.actor.connect('realize', Lang.bind(this, this._initialize));
+        /* Delay operations that require the shell to be fully loaded and with
+        * user theme applied.
+        */
+        this._realizeId = this.actor.connect('realize',
+            Lang.bind(this, this._initialize)
+        );
 
         // Add dash container actor and the container to the Chrome
         this.actor.set_child(this._box);
         this._box.add_actor(this.dash.actor);
-		
-		/*Put the Dock into global.window_group to have it being picked up by messageTray desktop clone
-		 * not sure if this might cause problems but it seems to work afaict 
-		 * 
-		 * The problem is, mesageTray will only pick up actors from window.global_group or overlayGroup
-		 *   and the Dock is in neither of those.
-		 * */
-		global.window_group.add_child(this.actor);
-		
+        /* Put the Dock into global.window_group to have it being picked up by
+         * messageTray desktop clone not sure if this might cause problems but
+         * it seems to work afaict.
+         * The problem is, mesageTray will only pick up actors from
+         * window.global_group or overlayGroup and the Dock is in neither of those.
+         */
+        global.window_group.add_child(this.actor);
 
         Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
-        
-        // pretend this._box is isToplevel child so that fullscreen is actually tracked
+        /* Pretend this._box is isToplevel child so that fullscreen
+         * is actually tracked.
+         */
         let index = Main.layoutManager._findActor(this._box);
         Main.layoutManager._trackedActors[index].isToplevel = true;
-	},
+    },
 
     _initialize: function() {
 
@@ -185,13 +211,11 @@ const AtomDock = new Lang.Class({
 
     _updateYPosition: function() {
         this.actor.y = this._monitor.y + this._monitor.height - this._box.height;
-
         // Modify legacy overview each time the dock repositioned
         this._modifyLegacyOverview();
     },
 
     _updateStaticBox: function() {
-
         // Init static box in accordance with dock's placement
         this.staticBox.init_rect(
             this._monitor.x + this._box.x,
@@ -204,19 +228,17 @@ const AtomDock = new Lang.Class({
     },
 
     _onThemeChanged: function() {
-
         this.dash._queueRedisplay();
         this._adjustTheme();
         this._resetPosition();
     },
 
     _adjustTheme: function() {
-
         // Prevent shell crash if the actor is not on the stage.
         // It happens enabling/disabling repeatedly the extension
         if (!this.dash._container.get_stage()) {
             return;
-		}
+        }
 
         // Remove prior style edits
         this.dash._container.set_style(null);
@@ -226,7 +248,9 @@ const AtomDock = new Lang.Class({
         let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
         let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
-        // We're "swapping" bottom border and bottom-right corner styles to left and top-left corner
+        /* We're "swapping" bottom border and bottom-right corner styles to
+         * left and top-left corner
+         */
         let newStyle = 'border-bottom: none;' +
             'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
             'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
@@ -236,7 +260,8 @@ const AtomDock = new Lang.Class({
 
     _modifyLegacyOverview: function() {
         // Set legacy overview bottom padding
-        Main.overview.viewSelector.actor.set_style('padding-bottom: ' + this._box.height + 'px;');
+        let actorStyle = 'padding-bottom: ' + this._box.height + 'px;';
+        Main.overview.viewSelector.actor.set_style(actorStyle);
     },
 
     _restoreLegacyOverview: function() {
@@ -245,36 +270,41 @@ const AtomDock = new Lang.Class({
     },
 
     _onShowAppsButtonToggled: function() {
-
-        // Sync the status of the default appButtons. Only if the two statuses are
-        // different, that means the user interacted with the extension provided
-        // application button, cutomize the behaviour. Otherwise the shell has changed the
-        // status (due to the _syncShowAppsButtonToggled function below) and it
-        // has already performed the desired action.
+        /* Sync the status of the default appButtons. Only if the two statuses
+         * are different, that means the user interacted with the extension
+         * provided application button, cutomize the behaviour. Otherwise the
+         * shell has changed the status (due to the _syncShowAppsButtonToggled
+         * function below) and it has already performed the desired action.
+         */
 
         let selector = Main.overview.viewSelector;
 
         if (selector._showAppsButton.checked !== this.dash.showAppsButton.checked) {
 
             if (this.dash.showAppsButton.checked) {
+
                 if (!Main.overview._shown) {
                     // force entering overview if needed
                     Main.overview.show();
                     this.forcedOverview = true;
                 }
+
                 selector._showAppsButton.checked = true;
             } else {
+
                 if (this.forcedOverview) {
                     // force exiting overview if needed
                     Main.overview.hide();
                     this.forcedOverview = false;
                 }
+
                 selector._showAppsButton.checked = false;
             }
         }
 
-        // whenever the button is unactivated even if not by the user still reset the
-        // forcedOverview flag
+        /* Whenever the button is unactivated even if not by the user
+         * still reset the forcedOverview flag.
+         */
         if (this.dash.showAppsButton.checked === false) {
             this.forcedOverview = false;
         }
@@ -282,22 +312,17 @@ const AtomDock = new Lang.Class({
 
     // Keep ShowAppsButton status in sync with the overview status
     _syncShowAppsButtonToggled: function() {
-
         let status = Main.overview.viewSelector._showAppsButton.checked;
-        if (this.dash.showAppsButton.checked !== status) {
-            this.dash.showAppsButton.checked = status;
-        }
+        this.dash.showAppsButton.checked = status;
     },
 
     // Show the dock and give focus to it
     _onAccessibilityFocus: function() {
-
         this._box.navigate_focus(null, Gtk.DirectionType.TAB_FORWARD, false);
         this._animateIn(ANIMATION_TIME, 0);
     },
 
     destroy: function() {
-
         // Disconnect global signals
         this._signalHandler.disconnect();
 
@@ -316,20 +341,20 @@ const AtomDock = new Lang.Class({
     _setTransparent: function() {
         this.dash._container.remove_style_pseudo_class('desktop');
         this.disableAutoHide();
-	},
+    },
 
     _hoverChanged: function() {
-
-        // Skip if dock is not in autohide mode for instance because it is shown
-        // by intellihide. Delay the hover changes check while switching
-        // workspace: the workspaceSwitcherPopup steals the hover status and it
-        // is not restored until the mouse move again (sync_hover has no effect).
+        /* Skip if dock is not in autohide mode for instance because it is shown
+         * by intellihide. Delay the hover changes check while switching
+         * workspace: the workspaceSwitcherPopup steals the hover status and it
+         * is not restored until the mouse move again (sync_hover has no effect).
+         */
         if (Main.wm._workspaceSwitcherPopup) {
             Mainloop.timeout_add(500, Lang.bind(this, function() {
-                    this._box.sync_hover();
-                    this._hoverChanged();
-                    return false;
-                }));
+                this._box.sync_hover();
+                this._hoverChanged();
+                return false;
+            }));
         } else if (this._autohideStatus) {
             if (this._box.hover) {
                 this._show();
@@ -340,18 +365,19 @@ const AtomDock = new Lang.Class({
     },
 
     _show: function() {
-
-        var anim = this._animStatus;
+        let anim = this._animStatus;
 
         if (this._autohideStatus && (anim.hidden() || anim.hiding())) {
-
             let delay;
-            // If the dock is hidden, wait this._settings.get_double('show-delay') before showing it;
-            // otherwise show it immediately.
+            /* If the dock is hidden, wait this._settings.get_double('show-delay')
+             * before showing it otherwise show it immediately.
+             */
             if (anim.hidden()) {
                 delay = SHOW_DELAY;
             } else if (anim.hiding()) {
-                // suppress all potential queued hiding animations (always give priority to show)
+                /* suppress all potential queued hiding animations
+                 * (always give priority to show)
+                 */
                 this._removeAnimations();
                 delay = 0;
             }
@@ -362,24 +388,24 @@ const AtomDock = new Lang.Class({
     },
 
     _hide: function() {
-
-        var anim = this._animStatus;
+        let anim = this._animStatus;
 
         // If no hiding animation is running or queued
-        if (this._autohideStatus && (anim.showing() || anim.shown())){
-
+        if (this._autohideStatus && (anim.showing() || anim.shown())) {
             let delay;
 
-            // If a show is queued but still not started (i.e the mouse was
-            // over the screen  border but then went away, i.e not a sufficient
-            // amount of time is passeed to trigger the dock showing) remove it.
+            /* If a show is queued but still not started (i.e the mouse was
+             * over the screen  border but then went away, i.e not a sufficient
+             *  amount of time is passeed to trigger the dock showing) remove it.
+             */
             if (anim.showing()) {
-                if (anim.running){
-                    //if a show already started, let it finish; queue hide without removing the show.
-                    // to obtain this I increase the delay to avoid the overlap and interference
-                    // between the animations
+                if (anim.running) {
+                    /* if a show already started, let it finish;
+                     * queue hide without removing the show. To obtain this I
+                     * increase the delay to avoid the overlap and interference
+                     * between the animations
+                     */
                     delay = HIDE_DELAY + 1.2 * ANIMATION_TIME + SHOW_DELAY;
-
                 } else {
                     this._removeAnimations();
                     delay = 0;
@@ -393,24 +419,28 @@ const AtomDock = new Lang.Class({
 
         }
     },
-    
+
     _removeAnimations: function() {
         Tweener.removeTweens(this.actor);
         this._animStatus.clearAll();
     },
 
    _animateIn: function(time, delay) {
-
         this._animStatus.queue(true);
         Tweener.addTween(this.actor, {
             y: this._monitor.y + this._monitor.height - this._box.height,
             time: time,
             delay: delay,
             transition: 'easeOutQuad',
+
             onStart:  Lang.bind(this, function() {
                 this._animStatus.start();
             }),
-            onOverwrite : Lang.bind(this, function() { this._animStatus.clear(); }),
+
+            onOverwrite : Lang.bind(this, function() {
+                this._animStatus.clear();
+            }),
+
             onComplete: Lang.bind(this, function() {
                 this._animStatus.end();
             })
@@ -418,17 +448,21 @@ const AtomDock = new Lang.Class({
     },
 
     _animateOut: function(time, delay) {
-
         this._animStatus.queue(false);
         Tweener.addTween(this.actor, {
             y: this._monitor.y + this._monitor.height - 1,
             time: time,
             delay: delay,
             transition: 'easeOutQuad',
+
             onStart:  Lang.bind(this, function() {
                 this._animStatus.start();
             }),
-            onOverwrite : Lang.bind(this, function() { this._animStatus.clear(); }),
+
+            onOverwrite : Lang.bind(this, function() {
+                this._animStatus.clear();
+            }),
+
             onComplete: Lang.bind(this, function() {
                 this._animStatus.end();
             })
@@ -440,7 +474,6 @@ const AtomDock = new Lang.Class({
 
         if (this._autohideStatus === true) {
             this._autohideStatus = false;
-
             this._removeAnimations();
             this._animateIn(ANIMATION_TIME, 0);
         }
@@ -450,9 +483,9 @@ const AtomDock = new Lang.Class({
     enableAutoHide: function() {
 
         if (this._autohideStatus === false) {
-
-            let delay = 0; // immediately fadein background if hide is blocked by mouseover,
-                         // oterwise start fadein when dock is already hidden.
+            // immediately fadein background if hide is blocked by mouseover,
+            let delay = 0;
+            // oterwise start fadein when dock is already hidden.
             this._autohideStatus = true;
             this._removeAnimations();
 
@@ -470,6 +503,7 @@ const AtomDock = new Lang.Class({
     }
 
 });
+
 Signals.addSignalMethods(AtomDock.prototype);
 
 /*
@@ -479,34 +513,40 @@ Signals.addSignalMethods(AtomDock.prototype);
 const AnimationStatus = new Lang.Class({
     Name: 'AnimationStatus',
 
-    _init: function(initialStatus){
+    _init: function(initialStatus) {
         this.status = initialStatus;
         this.nextStatus  = [];
         this.queued = false;
         this.running = false;
     },
 
-    queue: function(nextStatus){
+    queue: function(nextStatus) {
         this.nextStatus.push(nextStatus);
         this.queued = true;
     },
 
-    start: function(){
-        if (this.nextStatus.length == 1) {
+    start: function() {
+
+        if (this.nextStatus.length === 1) {
             this.queued = false;
         }
+
         this.running = true;
     },
 
-    end: function(){
-        if (this.nextStatus.length == 1) {
-            this.queued = false; // in the case end is called and start was not
+    end: function() {
+
+        if (this.nextStatus.length === 1) {
+            // in the case end is called and start was not
+            this.queued = false; 
         }
+
         this.running = false;
         this.status = this.nextStatus.shift();
     },
 
-    clear: function(){
+    clear: function() {
+
         if (this.nextStatus.length == 1) {
             this.queued = false;
             this.running = false;
@@ -515,42 +555,57 @@ const AnimationStatus = new Lang.Class({
         this.nextStatus.splice(0, 1);
     },
 
-    clearAll: function(){
+    clearAll: function() {
         this.queued  = false;
         this.running = false;
         this.nextStatus.splice(0, this.nextStatus.length);
     },
 
     // Return true if a showing animation is running or queued
-    showing: function(){
-        if ((this.running === true || this.queued === true) && this.nextStatus[0] === true) {
+    showing: function() {
+
+        if ((this.running === true || this.queued === true) &&
+                this.nextStatus[0] === true) {
+
             return true;
         } else {
+
             return false;
         }
     },
 
-    shown: function(){
-        if (this.status === true && !(this.queued || this.running)) {
+    shown: function() {
+
+        if (this.status === true &&
+                !(this.queued || this.running)) {
+
             return true;
         } else {
+
             return false;
         }
     },
 
     // Return true if an hiding animation is running or queued
-    hiding: function(){
-        if ((this.running === true || this.queued === true) && this.nextStatus[0] === false) {
+    hiding: function() {
+
+        if ((this.running === true || this.queued === true) &&
+                this.nextStatus[0] === false) {
+
             return true;
         } else {
+
             return false;
         }
     },
 
-    hidden: function(){
+    hidden: function() {
+
         if (this.status === false && !(this.queued || this.running)) {
+
             return true;
         } else {
+
             return false;
         }
     }
