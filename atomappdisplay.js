@@ -109,7 +109,7 @@ Signals.addSignalMethods(AtomAppIcon.prototype);
  * of Gnome 3.12. Changes are done to make popup displayed on top side.
  */
 const AtomAppIconMenu12 = new Lang.Class({
-    Name: 'AtomAppIconMenu',
+    Name: 'AtomAppIconMenu12',
     Extends: PopupMenu.PopupMenu,
 
     _init: function(source) {
@@ -125,8 +125,9 @@ const AtomAppIconMenu12 = new Lang.Class({
 
         // Chain our visibility and lifecycle to that of the source
         source.actor.connect('notify::mapped', Lang.bind(this, function () {
-            if (!source.actor.mapped)
+            if (!source.actor.mapped) {
                 this.close();
+            }
         }));
         source.actor.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
 
@@ -143,11 +144,11 @@ const AtomAppIconMenu12 = new Lang.Class({
         // Display the app windows menu items and the separator between windows
         // of the current desktop and other windows.
         let activeWorkspace = global.screen.get_active_workspace();
-        let separatorShown = windows.length > 0 && windows[0].get_workspace() != activeWorkspace;
+        let separatorShown = windows.length > 0 && windows[0].get_workspace() !== activeWorkspace;
 
         for (let i = 0; i < windows.length; i++) {
             let window = windows[i];
-            if (!separatorShown && window.get_workspace() != activeWorkspace) {
+            if (!separatorShown && window.get_workspace() !== activeWorkspace) {
                 this._appendSeparator();
                 separatorShown = true;
             }

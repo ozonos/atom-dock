@@ -74,13 +74,13 @@ const AtomDock = new Lang.Class({
             [
                 Main.overview,
                 'showing',
-                Lang.bind(this, function(){
-					this._setTransparent();
-					/* Switch actor group to ensure Dock gets shifted up in overview*/
-					global.window_group.remove_child(this.actor);
-					Main.layoutManager.overviewGroup.add_child(this.actor);
-					this._box.sync_hover();
-					})
+                Lang.bind(this, function() {
+                        this._setTransparent();
+                        /* Switch actor group to ensure Dock gets shifted up in overview */
+                        global.window_group.remove_child(this.actor);
+                        Main.layoutManager.overviewGroup.add_child(this.actor);
+                        this._box.sync_hover();
+                    })
             ],
             [
                 Main.overview,
@@ -90,16 +90,16 @@ const AtomDock = new Lang.Class({
             [
                 Main.overview,
                 'hidden',
-                Lang.bind(this, function(){
-						/* Switch actor groups after Overview has closed 
-						 * to ensure Dock gets shifted up in Desktop View
-						 * without making it look bumpy */
-						Main.layoutManager.overviewGroup.remove_child(this.actor);
-						global.window_group.add_child(this.actor);
-						this._box.sync_hover();
-						/*After sync hover has executed the Dock will lose its focused App
-						 * maybe we can grab that again without the user even noticing it?*/
-					})
+                Lang.bind(this, function() {
+                        /* Switch actor groups after Overview has closed
+                         * to ensure Dock gets shifted up in Desktop View
+                         * without making it look bumpy */
+                        Main.layoutManager.overviewGroup.remove_child(this.actor);
+                        global.window_group.add_child(this.actor);
+                        this._box.sync_hover();
+                        /* After sync hover has executed the Dock will lose its focused App
+                         * maybe we can grab that again without the user even noticing it? */
+                    })
             ]
         );
 
@@ -131,22 +131,22 @@ const AtomDock = new Lang.Class({
         // Add dash container actor and the container to the Chrome
         this.actor.set_child(this._box);
         this._box.add_actor(this.dash.actor);
-		
-		/*Put the Dock into global.window_group to have it being picked up by messageTray desktop clone
-		 * not sure if this might cause problems but it seems to work afaict 
-		 * 
-		 * The problem is, mesageTray will only pick up actors from window.global_group or overlayGroup
-		 *   and the Dock is in neither of those.
-		 * */
-		global.window_group.add_child(this.actor);
-		
+
+        /* Put the Dock into global.window_group to have it being picked up by messageTray desktop clone
+         * not sure if this might cause problems but it seems to work afaict
+         *
+         * The problem is, mesageTray will only pick up actors from window.global_group or overlayGroup
+         * and the Dock is in neither of those.
+         */
+        global.window_group.add_child(this.actor);
+
 
         Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
-        
+
         // pretend this._box is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._box);
         Main.layoutManager._trackedActors[index].isToplevel = true;
-	},
+    },
 
     _initialize: function() {
 
@@ -155,14 +155,14 @@ const AtomDock = new Lang.Class({
             this._realizeId = 0;
         }
 
-        // Adjust dock theme to match global theme
-        this._adjustTheme();
-
         // Set the default dock style
         this._setOpaque();
 
         // Set initial position
         this._resetPosition();
+
+        // Adjust dock theme to match global theme
+        this._adjustTheme();
 
         // Show the dock;
         this.actor.set_opacity(255);
@@ -216,17 +216,17 @@ const AtomDock = new Lang.Class({
         // It happens enabling/disabling repeatedly the extension
         if (!this.dash._container.get_stage()) {
             return;
-		}
+        }
 
         // Remove prior style edits
         this.dash._container.set_style(null);
 
         let themeNode = this.dash._container.get_theme_node();
-        let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
-        let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
+        let borderColor = themeNode.get_border_color(St.Side.TOP);
+        let borderWidth = themeNode.get_border_width(St.Side.TOP);
         let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
-        // We're "swapping" bottom border and bottom-right corner styles to left and top-left corner
+        // We're copying border and corner styles to left border and top-left corner
         let newStyle = 'border-bottom: none;' +
             'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
             'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
@@ -316,7 +316,7 @@ const AtomDock = new Lang.Class({
     _setTransparent: function() {
         this.dash._container.remove_style_pseudo_class('desktop');
         this.disableAutoHide();
-	},
+    },
 
     _hoverChanged: function() {
 
@@ -393,7 +393,7 @@ const AtomDock = new Lang.Class({
 
         }
     },
-    
+
     _removeAnimations: function() {
         Tweener.removeTweens(this.actor);
         this._animStatus.clearAll();
