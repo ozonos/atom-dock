@@ -74,12 +74,32 @@ const AtomDock = new Lang.Class({
             [
                 Main.overview,
                 'showing',
-                Lang.bind(this, this._setTransparent)
+                Lang.bind(this, function(){
+					this._setTransparent();
+					/* Switch actor group to ensure Dock gets shifted up in overview*/
+					global.window_group.remove_child(this.actor);
+					Main.layoutManager.overviewGroup.add_child(this.actor);
+					this._box.sync_hover();
+					})
             ],
             [
                 Main.overview,
                 'hiding',
                 Lang.bind(this, this._setOpaque)
+            ],
+            [
+                Main.overview,
+                'hidden',
+                Lang.bind(this, function(){
+						/* Switch actor groups after Overview has closed 
+						 * to ensure Dock gets shifted up in Desktop View
+						 * without making it look bumpy */
+						Main.layoutManager.overviewGroup.remove_child(this.actor);
+						global.window_group.add_child(this.actor);
+						this._box.sync_hover();
+						/*After sync hover has executed the Dock will lose its focused App
+						 * maybe we can grab that again without the user even noticing it?*/
+					})
             ]
         );
 
@@ -90,7 +110,7 @@ const AtomDock = new Lang.Class({
         // the allocation change of the parent container (slide in and slideout) doesn't trigger
         // anymore an update of the input regions. Force the update manually.
         this.actor.connect('notify::allocation',
-            Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
+        Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
 
         this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
@@ -98,13 +118,10 @@ const AtomDock = new Lang.Class({
         this.dash.connect('icon-size-changed', Lang.bind(this, this._updateYPosition));
 
         // sync hover after a popupmenu is closed
-        this.dash.connect('menu-closed', Lang.bind(this,
-            function() {
-                this._box.sync_hover();
-            }));
+        this.dash.connect('menu-closed', Lang.bind(this, this._box.sync_hover));
 
         // Dash accessibility
-        Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dash"), 'user-bookmarks-symbolic',
+        Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dock"), 'user-bookmarks-symbolic',
             { focusCallback: Lang.bind(this, this._onAccessibilityFocus) });
 
         // Delay operations that require the shell to be fully loaded and with
@@ -114,15 +131,22 @@ const AtomDock = new Lang.Class({
         // Add dash container actor and the container to the Chrome
         this.actor.set_child(this._box);
         this._box.add_actor(this.dash.actor);
+		
+		/*Put the Dock into global.window_group to have it being picked up by messageTray desktop clone
+		 * not sure if this might cause problems but it seems to work afaict 
+		 * 
+		 * The problem is, mesageTray will only pick up actors from window.global_group or overlayGroup
+		 *   and the Dock is in neither of those.
+		 * */
+		global.window_group.add_child(this.actor);
+		
 
-        Main.uiGroup.add_child(this.actor);
         Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
-        //Main.layoutManager._trackActor(this.dash._box, { affectsStruts: true });
-
+        
         // pretend this._box is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._box);
         Main.layoutManager._trackedActors[index].isToplevel = true;
-    },
+	},
 
     _initialize: function() {
 
@@ -192,7 +216,7 @@ const AtomDock = new Lang.Class({
         // It happens enabling/disabling repeatedly the extension
         if (!this.dash._container.get_stage()) {
             return;
-        }
+		}
 
         // Remove prior style edits
         this.dash._container.set_style(null);
@@ -292,7 +316,7 @@ const AtomDock = new Lang.Class({
     _setTransparent: function() {
         this.dash._container.remove_style_pseudo_class('desktop');
         this.disableAutoHide();
-    },
+	},
 
     _hoverChanged: function() {
 
@@ -369,13 +393,13 @@ const AtomDock = new Lang.Class({
 
         }
     },
-
+    
     _removeAnimations: function() {
         Tweener.removeTweens(this.actor);
         this._animStatus.clearAll();
     },
 
-    _animateIn: function(time, delay) {
+   _animateIn: function(time, delay) {
 
         this._animStatus.queue(true);
         Tweener.addTween(this.actor, {
@@ -397,7 +421,7 @@ const AtomDock = new Lang.Class({
 
         this._animStatus.queue(false);
         Tweener.addTween(this.actor, {
-            y: this._monitor.y + this._monitor.height - 5,
+            y: this._monitor.y + this._monitor.height - 1,
             time: time,
             delay: delay,
             transition: 'easeOutQuad',
