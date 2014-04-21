@@ -75,12 +75,12 @@ const AtomDock = new Lang.Class({
                 Main.overview,
                 'showing',
                 Lang.bind(this, function() {
-                        this._setTransparent();
-                        /* Switch actor group to ensure Dock gets shifted up in overview */
-                        global.window_group.remove_child(this.actor);
-                        Main.layoutManager.overviewGroup.add_child(this.actor);
-                        this._box.sync_hover();
-                    })
+                    this._setTransparent();
+                    /* Switch actor group to ensure Dock gets shifted up in overview */
+                    global.window_group.remove_child(this.actor);
+                    Main.layoutManager.overviewGroup.add_child(this.actor);
+                    this._box.sync_hover();
+                })
             ],
             [
                 Main.overview,
@@ -91,15 +91,15 @@ const AtomDock = new Lang.Class({
                 Main.overview,
                 'hidden',
                 Lang.bind(this, function() {
-                        /* Switch actor groups after Overview has closed
-                         * to ensure Dock gets shifted up in Desktop View
-                         * without making it look bumpy */
-                        Main.layoutManager.overviewGroup.remove_child(this.actor);
-                        global.window_group.add_child(this.actor);
-                        this._box.sync_hover();
-                        /* After sync hover has executed the Dock will lose its focused App
-                         * maybe we can grab that again without the user even noticing it? */
-                    })
+                    /* Switch actor groups after Overview has closed
+                     * to ensure Dock gets shifted up in Desktop View
+                     * without making it look bumpy */
+                    Main.layoutManager.overviewGroup.remove_child(this.actor);
+                    global.window_group.add_child(this.actor);
+                    this._box.sync_hover();
+                    /* After sync hover has executed the Dock will lose its focused App
+                     * maybe we can grab that again without the user even noticing it? */
+                })
             ]
         );
 
