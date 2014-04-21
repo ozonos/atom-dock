@@ -1,4 +1,6 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
+/*jshint esnext: true */
+/*jshint indent: 4 */
 
 /* Numix/Ozon Project 2014
  *
@@ -77,7 +79,6 @@ function hide() {
 }
 
 function enable() {
-
     // Hide old dash
     oldDash.hideDash();
 
@@ -87,7 +88,6 @@ function enable() {
 }
 
 function disable() {
-
     intellihide.destroy();
     atomDock.destroy();
     oldDash.showDash();

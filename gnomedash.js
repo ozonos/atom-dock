@@ -1,4 +1,6 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
+/*jshint esnext: true */
+/*jshint indent: 4 */
 
 const Lang = imports.lang;
 const Main = imports.ui.main;
