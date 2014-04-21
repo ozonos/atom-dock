@@ -82,7 +82,7 @@ const AtomAppIcon = new Lang.Class({
                 })
             );
 
-            Main.overview.connect('hiding', Lang.bind(this, this._menu.close()));
+            Main.overview.connect('hiding', Lang.bind(this, this._menu.close));
 
             this._menuManager.addMenu(this._menu);
         }
@@ -128,7 +128,7 @@ const AtomAppIconMenu = new Lang.Class({
             })
         );
 
-        source.actor.connect('destroy', Lang.bind(this, this.actor.destroy()));
+        source.actor.connect('destroy', Lang.bind(this, this.actor.destroy));
 
         Main.uiGroup.add_actor(this.actor);
     },
