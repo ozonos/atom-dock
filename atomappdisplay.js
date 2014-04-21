@@ -1,5 +1,6 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
-
+/*jshint esnext: true */
+/*jshint indent: 4 */
 const Lang = imports.lang;
 const Signals = imports.signals;
 const Clutter = imports.gi.Clutter;
@@ -31,6 +32,7 @@ const AtomAppIcon = new Lang.Class({
         if (!this._isAppOnActiveWorkspace() ||
             (modifiers & Clutter.ModifierType.CONTROL_MASK &&
                     this.app.state === Shell.AppState.RUNNING)) {
+
             this.app.open_new_window(-1);
         } else {
             this.app.activate();
@@ -40,9 +42,9 @@ const AtomAppIcon = new Lang.Class({
     },
 
     _onStateChanged: function() {
-
         if (this.app.state !== Shell.AppState.STOPPED &&
             this._isAppOnActiveWorkspace()) {
+
             this.actor.add_style_class_name('running');
         } else {
             this.actor.remove_style_class_name('running');
@@ -53,6 +55,7 @@ const AtomAppIcon = new Lang.Class({
         if (this._windowsChangedId > 0) {
             this.app.disconnect(this._windowsChangedId);
         }
+
         this._windowsChangedId = 0;
         this.parent();
     },
@@ -64,21 +67,27 @@ const AtomAppIcon = new Lang.Class({
 
         if (!this._menu) {
             this._menu = new AtomAppIconMenu(this);
-            this._menu.connect('activate-window', Lang.bind(this, function (menu, window) {
-                this.activateWindow(window);
-            }));
-            this._menu.connect('open-state-changed', Lang.bind(this, function (menu, isPoppedUp) {
-                if (!isPoppedUp) {
-                    this._onMenuPoppedDown();
-                }
-            }));
-            Main.overview.connect('hiding', Lang.bind(this, function () { this._menu.close(); }));
+
+            this._menu.connect('activate-window',
+                Lang.bind(this, function (menu, window) {
+                    this.activateWindow(window);
+                })
+            );
+
+            this._menu.connect('open-state-changed',
+                Lang.bind(this, function (menu, isPoppedUp) {
+                    if (!isPoppedUp) {
+                        this._onMenuPoppedDown();
+                    }
+                })
+            );
+
+            Main.overview.connect('hiding', Lang.bind(this, this._menu.close));
 
             this._menuManager.addMenu(this._menu);
         }
 
         this.emit('menu-state-changed', true);
-
         this.actor.set_hover(true);
         this._menu.popup();
         this._menuManager.ignoreRelease();
@@ -91,6 +100,7 @@ const AtomAppIcon = new Lang.Class({
         return this.app.is_on_workspace(global.screen.get_active_workspace());
     }
 });
+
 Signals.addSignalMethods(AtomAppIcon.prototype);
 
 /* This class is a fork of the upstream AppIconMenu class (ui.appDisplay.js).
@@ -101,25 +111,24 @@ const AtomAppIconMenu = new Lang.Class({
     Extends: PopupMenu.PopupMenu,
 
     _init: function(source) {
-
         this.parent(source.actor, 0.5, St.Side.TOP);
 
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-
         this._source = source;
-
         this.connect('activate', Lang.bind(this, this._onActivate));
-
         this.actor.add_style_class_name('app-well-menu');
 
         // Chain our visibility and lifecycle to that of the source
-        source.actor.connect('notify::mapped', Lang.bind(this, function () {
-            if (!source.actor.mapped) {
-                this.close();
-            }
-        }));
-        source.actor.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
+        source.actor.connect('notify::mapped',
+            Lang.bind(this, function() {
+                if (!source.actor.mapped) {
+                    this.close();
+                }
+            })
+        );
+
+        source.actor.connect('destroy', Lang.bind(this, this.actor.destroy));
 
         Main.uiGroup.add_actor(this.actor);
     },
@@ -134,13 +143,17 @@ const AtomAppIconMenu = new Lang.Class({
         // Display the app windows menu items and the separator between windows
         // of the current desktop and other windows.
         let activeWorkspace = global.screen.get_active_workspace();
-        let separatorShown = windows.length > 0 && windows[0].get_workspace() != activeWorkspace;
+        let separatorShown = windows.length > 0 &&
+            windows[0].get_workspace() !== activeWorkspace;
 
         for (let i = 0; i < windows.length; i++) {
-            if (!separatorShown && windows[i].get_workspace() != activeWorkspace) {
+            if (!separatorShown &&
+                windows[i].get_workspace() !== activeWorkspace) {
+
                 this._appendSeparator();
                 separatorShown = true;
             }
+
             let item = this._appendMenuItem(windows[i].title);
             item._window = windows[i];
         }
@@ -151,10 +164,8 @@ const AtomAppIconMenu = new Lang.Class({
             }
 
             let isFavorite = AppFavorites.getAppFavorites().isFavorite(this._source.app.get_id());
-
             this._newWindowMenuItem = this._appendMenuItem(_("New Window"));
             this._appendSeparator();
-
             this._toggleFavoriteMenuItem = this._appendMenuItem(isFavorite ? _("Remove from Favorites")
                                                                 : _("Add to Favorites"));
         }
@@ -169,6 +180,7 @@ const AtomAppIconMenu = new Lang.Class({
         // FIXME: app-well-menu-item style
         let item = new PopupMenu.PopupMenuItem(labelText);
         this.addMenuItem(item);
+
         return item;
     },
 
@@ -187,13 +199,17 @@ const AtomAppIconMenu = new Lang.Class({
         } else if (child === this._toggleFavoriteMenuItem) {
             let favs = AppFavorites.getAppFavorites();
             let isFavorite = favs.isFavorite(this._source.app.get_id());
+
             if (isFavorite) {
                 favs.removeFavorite(this._source.app.get_id());
             } else {
                 favs.addFavorite(this._source.app.get_id());
             }
+
         }
+
         this.close();
     }
 });
+
 Signals.addSignalMethods(AtomAppIconMenu.prototype);
