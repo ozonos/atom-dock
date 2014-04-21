@@ -140,7 +140,11 @@ const AtomDock = new Lang.Class({
         );
 
         // sync hover after a popupmenu is closed
-        this.dash.connect('menu-closed', Lang.bind(this, this._box.sync_hover));
+        this.dash.connect('menu-closed', Lang.bind(this,
+            function() {
+                this._box.sync_hover();
+            })
+        );
 
         // Dash accessibility
         Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dock"),

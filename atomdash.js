@@ -414,6 +414,11 @@ const AtomDash = new Lang.Class({
             }
 
             item.hideLabel();
+        } else {
+            // I want to listen from outside when a menu is closed. I used to
+            // add a custom signal to the appIcon, since gnome 3.8 the signal
+            // calling this callback was added upstream.
+            this.emit('menu-closed');
         }
     },
 
