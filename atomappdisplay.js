@@ -1,6 +1,7 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
 /*jshint esnext: true */
 /*jshint indent: 4 */
+
 const Lang = imports.lang;
 const Signals = imports.signals;
 const Clutter = imports.gi.Clutter;
@@ -11,6 +12,11 @@ const AppDisplay = imports.ui.appDisplay;
 const AppFavorites = imports.ui.appFavorites;
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
+
+// Get Gnome version for AppIconMenu compability
+let ShellVersion = imports.misc.config.PACKAGE_VERSION.split(".").map(function (x) { return +x; });
+const MAJOR_VERSION = ShellVersion[0];
+const MINOR_VERSION = ShellVersion[1];
 
 /* This class is a extension of the upstream AppIcon class (ui.appDisplay.js).
  * Changes are done to modify activate, popup menu and running app behavior.
@@ -66,8 +72,16 @@ const AtomAppIcon = new Lang.Class({
         this._draggable.fakeRelease();
 
         if (!this._menu) {
-            this._menu = new AtomAppIconMenu(this);
 
+            this._menu = null;
+            // Create AtomAppIconMenu based on Gnome version
+            if (MAJOR_VERSION === 3 && MINOR_VERSION <= 10) {
+                this._menu = new AtomAppIconMenu10(this);
+            } else {
+                this._menu = new AtomAppIconMenu12(this);
+            }
+
+            // Everything else should be the same
             this._menu.connect('activate-window',
                 Lang.bind(this, function (menu, window) {
                     this.activateWindow(window);
@@ -103,11 +117,123 @@ const AtomAppIcon = new Lang.Class({
 
 Signals.addSignalMethods(AtomAppIcon.prototype);
 
-/* This class is a fork of the upstream AppIconMenu class (ui.appDisplay.js).
- * Changes are done to make popup displayed on top side.
+/* This class is a fork of the upstream AppIconMenu class (ui.appDisplay.js)
+ * of Gnome 3.12. Changes are done to make popup displayed on top side.
  */
-const AtomAppIconMenu = new Lang.Class({
-    Name: 'AtomAppIconMenu',
+const AtomAppIconMenu12 = new Lang.Class({
+    Name: 'AtomAppIconMenu12',
+    Extends: PopupMenu.PopupMenu,
+
+    _init: function(source) {
+
+        this.parent(source.actor, 0.5, St.Side.TOP);
+
+        // We want to keep the item hovered while the menu is up
+        this.blockSourceEvents = true;
+
+        this._source = source;
+
+        this.actor.add_style_class_name('app-well-menu');
+
+        // Chain our visibility and lifecycle to that of the source
+        source.actor.connect('notify::mapped', Lang.bind(this, function () {
+            if (!source.actor.mapped) {
+                this.close();
+            }
+        }));
+        source.actor.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
+
+        Main.uiGroup.add_actor(this.actor);
+    },
+
+    _redisplay: function() {
+        this.removeAll();
+
+        let windows = this._source.app.get_windows().filter(function(w) {
+            return !w.skip_taskbar;
+        });
+
+        // Display the app windows menu items and the separator between windows
+        // of the current desktop and other windows.
+        let activeWorkspace = global.screen.get_active_workspace();
+        let separatorShown = windows.length > 0 && windows[0].get_workspace() !== activeWorkspace;
+
+        for (let i = 0; i < windows.length; i++) {
+            let window = windows[i];
+            if (!separatorShown && window.get_workspace() !== activeWorkspace) {
+                this._appendSeparator();
+                separatorShown = true;
+            }
+            let item = this._appendMenuItem(window.title);
+            item.connect('activate', Lang.bind(this, function() {
+                this.emit('activate-window', window);
+            }));
+        }
+
+        if (!this._source.app.is_window_backed()) {
+            this._appendSeparator();
+
+            this._newWindowMenuItem = this._appendMenuItem(_("New Window"));
+            this._newWindowMenuItem.connect('activate', Lang.bind(this, function() {
+                this._source.app.open_new_window(-1);
+                this.emit('activate-window', null);
+            }));
+            this._appendSeparator();
+
+            let appInfo = this._source.app.get_app_info();
+            let actions = appInfo.list_actions();
+            for (let i = 0; i < actions.length; i++) {
+                let action = actions[i];
+                let item = this._appendMenuItem(appInfo.get_action_name(action));
+                item.connect('activate', Lang.bind(this, function(emitter, event) {
+                    this._source.app.launch_action(action, event.get_time(), -1);
+                    this.emit('activate-window', null);
+                }));
+            }
+            this._appendSeparator();
+
+            let isFavorite = AppFavorites.getAppFavorites().isFavorite(this._source.app.get_id());
+
+            if (isFavorite) {
+                let item = this._appendMenuItem(_("Remove from Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.removeFavorite(this._source.app.get_id());
+                }));
+            } else {
+                let item = this._appendMenuItem(_("Add to Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.addFavorite(this._source.app.get_id());
+                }));
+            }
+        }
+    },
+
+    _appendSeparator: function () {
+        let separator = new PopupMenu.PopupSeparatorMenuItem();
+        this.addMenuItem(separator);
+    },
+
+    _appendMenuItem: function(labelText) {
+        // FIXME: app-well-menu-item style
+        let item = new PopupMenu.PopupMenuItem(labelText);
+        this.addMenuItem(item);
+        return item;
+    },
+
+    popup: function(activatingButton) {
+        this._redisplay();
+        this.open();
+    }
+});
+Signals.addSignalMethods(AtomAppIconMenu12.prototype);
+
+/* This class is a fork of the upstream AppIconMenu class (ui.appDisplay.js)
+ * of Gnome 3.10. Changes are done to make popup displayed on top side.
+ */
+const AtomAppIconMenu10 = new Lang.Class({
+    Name: 'AtomAppIconMenu10',
     Extends: PopupMenu.PopupMenu,
 
     _init: function(source) {
@@ -211,5 +337,4 @@ const AtomAppIconMenu = new Lang.Class({
         this.close();
     }
 });
-
-Signals.addSignalMethods(AtomAppIconMenu.prototype);
+Signals.addSignalMethods(AtomAppIconMenu10.prototype);

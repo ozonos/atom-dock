@@ -11,6 +11,7 @@
  *  - Show Applications label is now on top of dock
  *  - Icons' popup menu is now on top of dock
  *  - Fix Y position bug when switching workspace between docks with different icon size
+ *  - Fix menu popover for Gnome 3.12
  *
  * 0.3 Changes:
  *  - implemented per-workspace-app behavior

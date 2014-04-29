@@ -89,7 +89,7 @@ const AtomDock = new Lang.Class({
                 Lang.bind(this, function() {
                     this._setTransparent();
                     /* Switch actor group to ensure
-                     * Dock gets shifted up in overview*/
+                     * Dock gets shifted up in overview */
                     global.window_group.remove_child(this.actor);
                     Main.layoutManager.overviewGroup.add_child(this.actor);
                     this._box.sync_hover();
@@ -104,15 +104,15 @@ const AtomDock = new Lang.Class({
                 Main.overview,
                 'hidden',
                 Lang.bind(this, function() {
-                    /* Switch actor groups after Overview has closed 
+                    /* Switch actor groups after Overview has closed
                      * to ensure Dock gets shifted up in Desktop View
                      * without making it look bumpy */
                     Main.layoutManager.overviewGroup.remove_child(this.actor);
                     global.window_group.add_child(this.actor);
                     this._box.sync_hover();
-                    /*After sync hover has executed the Dock will lose its
+                    /* After sync hover has executed the Dock will lose its
                      * focused App maybe we can grab that again without the user
-                     * even noticing it?*/
+                     * even noticing it? */
                 })
             ]
         );
@@ -140,7 +140,11 @@ const AtomDock = new Lang.Class({
         );
 
         // sync hover after a popupmenu is closed
-        this.dash.connect('menu-closed', Lang.bind(this, this._box.sync_hover));
+        this.dash.connect('menu-closed', Lang.bind(this,
+            function() {
+                this._box.sync_hover();
+            })
+        );
 
         // Dash accessibility
         Main.ctrlAltTabManager.addGroup(this.dash.actor, _("Dock"),
@@ -158,6 +162,7 @@ const AtomDock = new Lang.Class({
         // Add dash container actor and the container to the Chrome
         this.actor.set_child(this._box);
         this._box.add_actor(this.dash.actor);
+
         /* Put the Dock into global.window_group to have it being picked up by
          * messageTray desktop clone not sure if this might cause problems but
          * it seems to work afaict.
@@ -167,6 +172,7 @@ const AtomDock = new Lang.Class({
         global.window_group.add_child(this.actor);
 
         Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
+
         /* Pretend this._box is isToplevel child so that fullscreen
          * is actually tracked.
          */
@@ -181,14 +187,14 @@ const AtomDock = new Lang.Class({
             this._realizeId = 0;
         }
 
-        // Adjust dock theme to match global theme
-        this._adjustTheme();
-
         // Set the default dock style
         this._setOpaque();
 
         // Set initial position
         this._resetPosition();
+
+        // Adjust dock theme to match global theme
+        this._adjustTheme();
 
         // Show the dock;
         this.actor.set_opacity(255);
@@ -244,12 +250,12 @@ const AtomDock = new Lang.Class({
         this.dash._container.set_style(null);
 
         let themeNode = this.dash._container.get_theme_node();
-        let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
-        let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
+        let borderColor = themeNode.get_border_color(St.Side.TOP);
+        let borderWidth = themeNode.get_border_width(St.Side.TOP);
         let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
-        /* We're "swapping" bottom border and bottom-right corner styles to
-         * left and top-left corner
+        /* We're copying border and corner styles to left border and top-left
+         * corner, also removing bottom border and bottom-right corner styles
          */
         let newStyle = 'border-bottom: none;' +
             'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
@@ -538,7 +544,7 @@ const AnimationStatus = new Lang.Class({
 
         if (this.nextStatus.length === 1) {
             // in the case end is called and start was not
-            this.queued = false; 
+            this.queued = false;
         }
 
         this.running = false;
