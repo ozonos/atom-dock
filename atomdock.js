@@ -341,11 +341,11 @@ const AtomDock = new Lang.Class({
     },
 
     _setOpaque: function() {
-        this.dash._container.add_style_pseudo_class('desktop');
+        this.dash._container.remove_style_class_name('atom-hide-background');
     },
 
     _setTransparent: function() {
-        this.dash._container.remove_style_pseudo_class('desktop');
+        this.dash._container.add_style_class_name('atom-hide-background');
         this.disableAutoHide();
     },
 
