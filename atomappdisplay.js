@@ -85,14 +85,7 @@ const AtomAppIcon = new Lang.Class({
         this._draggable.fakeRelease();
 
         if (!this._menu) {
-
-            this._menu = null;
-            // Create AtomAppIconMenu based on Gnome version
-            if (MAJOR_VERSION === 3 && MINOR_VERSION <= 10) {
-                this._menu = new AtomAppIconMenu10(this);
-            } else {
-                this._menu = new AtomAppIconMenu12(this);
-            }
+            this._menu = new AtomAppIconMenu(this);
 
             // Everything else should be the same
             this._menu.connect('activate-window',
@@ -133,8 +126,8 @@ Signals.addSignalMethods(AtomAppIcon.prototype);
 /* This class is a fork of the upstream AppIconMenu class (ui.appDisplay.js)
  * of Gnome 3.12. Changes are done to make popup displayed on top side.
  */
-const AtomAppIconMenu12 = new Lang.Class({
-    Name: 'AtomAppIconMenu12',
+const AtomAppIconMenu = new Lang.Class({
+    Name: 'AtomAppIconMenu',
     Extends: PopupMenu.PopupMenu,
 
     _init: function(source) {
@@ -245,114 +238,4 @@ const AtomAppIconMenu12 = new Lang.Class({
         this.open();
     }
 });
-Signals.addSignalMethods(AtomAppIconMenu12.prototype);
-
-/* This class is a fork of the upstream AppIconMenu class (ui.appDisplay.js)
- * of Gnome 3.10. Changes are done to make popup displayed on top side.
- */
-const AtomAppIconMenu10 = new Lang.Class({
-    Name: 'AtomAppIconMenu10',
-    Extends: PopupMenu.PopupMenu,
-
-    _init: function(source) {
-        this.parent(source.actor, 0.5, St.Side.TOP);
-
-        // We want to keep the item hovered while the menu is up
-        this.blockSourceEvents = true;
-        this._source = source;
-        this.connect('activate', Lang.bind(this, this._onActivate));
-        this.actor.add_style_class_name('app-well-menu');
-
-        // Chain our visibility and lifecycle to that of the source
-        source.actor.connect('notify::mapped',
-            Lang.bind(this, function() {
-                if (!source.actor.mapped) {
-                    this.close();
-                }
-            })
-        );
-
-        source.actor.connect('destroy', Lang.bind(this, this.actor.destroy));
-
-        Main.uiGroup.add_actor(this.actor);
-    },
-
-    _redisplay: function() {
-        this.removeAll();
-
-        let windows = this._source.app.get_windows().filter(function(w) {
-            return Shell.WindowTracker.is_window_interesting(w);
-        });
-
-        // Display the app windows menu items and the separator between windows
-        // of the current desktop and other windows.
-        let activeWorkspace = global.screen.get_active_workspace();
-        let separatorShown = windows.length > 0 &&
-            windows[0].get_workspace() !== activeWorkspace;
-
-        for (let i = 0; i < windows.length; i++) {
-            if (!separatorShown &&
-                windows[i].get_workspace() !== activeWorkspace) {
-
-                this._appendSeparator();
-                separatorShown = true;
-            }
-
-            let item = this._appendMenuItem(windows[i].title);
-            item._window = windows[i];
-        }
-
-        if (!this._source.app.is_window_backed()) {
-            if (windows.length > 0) {
-                this._appendSeparator();
-            }
-
-            let isFavorite = AppFavorites.getAppFavorites().isFavorite(this._source.app.get_id());
-            this._newWindowMenuItem = this._appendMenuItem(_("New Window"));
-            this._appendSeparator();
-            this._toggleFavoriteMenuItem = this._appendMenuItem(isFavorite ? _("Remove from Favorites")
-                                                                : _("Add to Favorites"));
-        }
-    },
-
-    _appendSeparator: function () {
-        let separator = new PopupMenu.PopupSeparatorMenuItem();
-        this.addMenuItem(separator);
-    },
-
-    _appendMenuItem: function(labelText) {
-        // FIXME: app-well-menu-item style
-        let item = new PopupMenu.PopupMenuItem(labelText);
-        this.addMenuItem(item);
-
-        return item;
-    },
-
-    popup: function(activatingButton) {
-        this._redisplay();
-        this.open();
-    },
-
-    _onActivate: function (actor, child) {
-        if (child._window) {
-            let metaWindow = child._window;
-            this.emit('activate-window', metaWindow);
-        } else if (child === this._newWindowMenuItem) {
-            this._source.app.open_new_window(-1);
-            this.emit('activate-window', null);
-        } else if (child === this._toggleFavoriteMenuItem) {
-            let favs = AppFavorites.getAppFavorites();
-            let isFavorite = favs.isFavorite(this._source.app.get_id());
-
-            if (isFavorite) {
-                favs.removeFavorite(this._source.app.get_id());
-            } else {
-                favs.addFavorite(this._source.app.get_id());
-            }
-
-        }
-
-        this.close();
-    }
-});
-Signals.addSignalMethods(AtomAppIconMenu10.prototype);
+Signals.addSignalMethods(AtomAppIconMenu.prototype);
