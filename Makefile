@@ -1,5 +1,5 @@
 UUID=atom-dock\@ozonos.org
-INSTALLDIR=~/.local/share/gnome-shell/extensions/$(UUID)
+INSTALLDIR=$(DESTDIR)/usr/share/gnome-shell/extensions/$(UUID)
 
 all:
 
