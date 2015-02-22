@@ -86,14 +86,7 @@ const AtomDock = new Lang.Class({
             [
                 Main.overview,
                 'showing',
-                Lang.bind(this, function() {
-                    this._setTransparent();
-                    /* Switch actor group to ensure
-                     * Dock gets shifted up in overview */
-                    global.window_group.remove_child(this.actor);
-                    Main.layoutManager.overviewGroup.add_child(this.actor);
-                    this._box.sync_hover();
-                })
+                Lang.bind(this, this._setTransparent)
             ],
             [
                 Main.overview,
@@ -101,19 +94,10 @@ const AtomDock = new Lang.Class({
                 Lang.bind(this, this._setOpaque)
             ],
             [
-                Main.overview,
-                'hidden',
-                Lang.bind(this, function() {
-                    /* Switch actor groups after Overview has closed
-                     * to ensure Dock gets shifted up in Desktop View
-                     * without making it look bumpy */
-                    Main.layoutManager.overviewGroup.remove_child(this.actor);
-                    global.window_group.add_child(this.actor);
-                    this._box.sync_hover();
-                    /* After sync hover has executed the Dock will lose its
-                     * focused App maybe we can grab that again without the user
-                     * even noticing it? */
-                })
+               /* What if the Message Tray is removed in 3.16 ? Then this might blow up */
+               Main.messageTray,
+                'showing',
+                Lang.bind(this, this._hide)       
             ]
         );
 
@@ -163,14 +147,8 @@ const AtomDock = new Lang.Class({
         this.actor.set_child(this._box);
         this._box.add_actor(this.dash.actor);
 
-        /* Put the Dock into global.window_group to have it being picked up by
-         * messageTray desktop clone not sure if this might cause problems but
-         * it seems to work afaict.
-         * The problem is, mesageTray will only pick up actors from
-         * window.global_group or overlayGroup and the Dock is in neither of those.
-         */
-        global.window_group.add_child(this.actor);
 
+        Main.uiGroup.add_child(this.actor);
         Main.layoutManager._trackActor(this._box, { trackFullscreen: true });
 
         /* Pretend this._box is isToplevel child so that fullscreen
