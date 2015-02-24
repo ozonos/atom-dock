@@ -58,7 +58,8 @@
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
-const GnomeDash = Me.imports.gnomedash;
+//const GnomeDash = Me.imports.gnomedash;
+        /* Not needed anymore, it was a pure 'less is more decision' since it's 2 lines vs. a separate file and an extra Class*/
 const Intellihide = Me.imports.intellihide;
 const AtomDock = Me.imports.atomdock;
 
@@ -71,8 +72,12 @@ const Mainloop = imports.mainloop;
 const AppDisplay = imports.ui.appDisplay;
 const PopupMenu  = imports.ui.popupMenu;
 const AppFavorites = imports.ui.appFavorites;
+const Main = imports.ui.main;
 
 let injections = {};
+let oldDash;
+let atomDock;
+let intellihide;
 
 const WindowMenuItem = new Lang.Class({
     Name: 'WindowMenuItem',
@@ -102,12 +107,8 @@ function injectToFunction(parent, name, func) {
     return origin;
 }
 
-let oldDash;
-let atomDock;
-let intellihide;
-
 function init() {
-    oldDash = new GnomeDash.GnomeDash();
+       
 }
 
 function removeInjection(object, injection, name) {
@@ -127,15 +128,19 @@ function hide() {
 }
 
 function enable() {
-    // Hide old dash
-    oldDash.hideDash();
+    /* Make sure we don't see the old Dash anymore 
+     * */    
+    Main.overview._dash.actor.get_parent().hide();    
+    oldDash = Main.overview._dash; 
 
     // Enable new dock
     atomDock = new AtomDock.AtomDock();
     intellihide = new Intellihide.Intellihide(show, hide, atomDock);
 
-    injections = {};
-
+    Main.overview._dash = atomDock.dash;    
+        
+    //injections = {};
+        /* This is already defined in the header*/
     injections['_redisplay'] = undefined;
 
     injections['_redisplay'] = injectToFunction(AppDisplay.AppIconMenu.prototype, '_redisplay', function () {
@@ -211,11 +216,18 @@ function enable() {
 function disable() {
     intellihide.destroy();
     atomDock.destroy();
-    oldDash.showDash();
+    
+    /*Make sure the original Dock is usable after disabling Atom Dock*/        
+    Main.overview._dash = oldDash;    
+    Main.overview._dash.actor.get_parent().show();
 
     for (i in injections) {
         removeInjection(AppDisplay.AppIconMenu.prototype, injections, i);
     }
 
-    injections = {};
+    /*Cleanup*/    
+    injections = null;
+    atomDock= null;
+    intellihide=null;
+    oldDash=null;    
 }
