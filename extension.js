@@ -4,7 +4,12 @@
 
 /* Numix/Ozon Project 2014
  *
- * Extension's version: 0.3.1
+ * Extension's version: 0.3.2
+ * 0.3.2 Changes:
+ *  - Fixed Swarm Animation to respect new Dock position
+ *  - removed gnomedash.js since it was just a wrapper class for 2 lines of code,
+ *    which are now in extension.js
+ *  - minor code cleanups
  *
  * 0.3.1 Changes:
  *  - Fixed invisible box which prevent clicking even when dock is hidden
@@ -52,8 +57,7 @@
  *  - app label only shows when animation not running (see #18)
  *  - check behavior on multiple monitor
  *  - add settings schema
- *  - implement workspace button
- *
+ *  - implement workspace button    
  */
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -107,10 +111,6 @@ function injectToFunction(parent, name, func) {
     return origin;
 }
 
-function init() {
-       
-}
-
 function removeInjection(object, injection, name) {
     if (injection[name] === undefined) {
         delete object[name];
@@ -127,24 +127,26 @@ function hide() {
     atomDock.enableAutoHide();
 }
 
+function init() {
+       
+}
+
 function enable() {
-    /* Make sure we don't see the old Dash anymore 
-     * */    
+    /* Make sure we don't see the old Dash anymore */    
     Main.overview._dash.actor.get_parent().hide();    
     oldDash = Main.overview._dash; 
 
-    // Enable new dock
+    /* Enable new dock */
     atomDock = new AtomDock.AtomDock();
     intellihide = new Intellihide.Intellihide(show, hide, atomDock);
 
+    /* Make Shell respect our custom Dock as the 'real deal' :) */    
     Main.overview._dash = atomDock.dash;    
-        
-    //injections = {};
-        /* This is already defined in the header*/
+
     injections['_redisplay'] = undefined;
 
     injections['_redisplay'] = injectToFunction(AppDisplay.AppIconMenu.prototype, '_redisplay', function () {
-// Re-create the menu.
+        // Re-create the menu.
         // TODO: Jumplist support?
         this.removeAll()
 
