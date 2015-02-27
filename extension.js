@@ -228,7 +228,7 @@ function disable() {
     }
 
     /*Cleanup*/    
-    injections = null;
+    injections = {};
     atomDock= null;
     intellihide=null;
     oldDash=null;    
