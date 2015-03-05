@@ -8,6 +8,7 @@ const Signals = imports.signals;
 const Clutter = imports.gi.Clutter;
 const Gtk = imports.gi.Gtk;
 const St = imports.gi.St;
+const Shell = imports.gi.Shell;
 
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
@@ -38,6 +39,9 @@ const AtomDock = new Lang.Class({
 
         // Overview shown status
         this.forcedOverview = false;
+
+        // Contain tray dwell timeout function
+        this._myDwell = 0;
 
         // Put dock on the primary monitor
         this._monitor = Main.layoutManager.primaryMonitor;
@@ -97,7 +101,7 @@ const AtomDock = new Lang.Class({
                /* What if the Message Tray is removed in 3.16 ? Then this might blow up */
                Main.messageTray,
                 'showing',
-                Lang.bind(this, this._hide)       
+                Lang.bind(this, this._hoverChanged)
             ]
         );
 
@@ -346,6 +350,36 @@ const AtomDock = new Lang.Class({
                 this._hide();
             }
         }
+        // Disable message tray pressure on enter hover, enable it on out of hover
+        if (this._box.hover) {
+            this._disableMessageTrayPressure();
+        } else {
+            this._enableMessageTrayPressure();
+        }
+    },
+
+    // Enabling disabling message tray pressure credit to
+    // https://github.com/tuxor1337/insensitive-message-tray
+    _disableMessageTrayPressure: function() {
+        if("_trayPressure" in Main.layoutManager) {
+            Main.layoutManager._trayPressure._keybindingMode =
+                Shell.KeyBindingMode.OVERVIEW;
+        }
+        this._myDwell = Main.messageTray._trayDwellTimeout;
+        Main.messageTray._trayDwellTimeout = function() { return false; };
+        global.log("test");
+    },
+
+    _enableMessageTrayPressure: function() {
+        if("_trayPressure" in Main.layoutManager) {
+            Main.layoutManager._trayPressure._keybindingMode =
+                Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.OVERVIEW;
+        }
+        if(this._myDwell) {
+            Main.messageTray._trayDwellTimeout = _myDwell;
+            this._myDwell = 0;
+        }
+        global.log("test2");
     },
 
     _show: function() {

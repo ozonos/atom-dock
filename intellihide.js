@@ -125,6 +125,18 @@ const Intellihide = new Lang.Class({
                 global.screen,
                 'monitors-changed',
                 Lang.bind(this, this._updateDockVisibility)
+            ],
+            [
+                /* What if the Message Tray is removed in 3.16 ? Then this might blow up */
+                Main.messageTray,
+                'showing',
+                Lang.bind(this, this._forceHide)
+            ],
+            [
+                /* What if the Message Tray is removed in 3.16 ? Then this might blow up */
+                Main.messageTray,
+                'hiding',
+                Lang.bind(this, this._onMessageTrayHiding)
             ]
         );
 
@@ -155,6 +167,12 @@ const Intellihide = new Lang.Class({
 
     },
 
+    _forceHide: function() {
+
+        this._hide(true);
+
+    },
+
     _hide: function(force) {
 
         if (this.status !== false || force) {
@@ -162,6 +180,13 @@ const Intellihide = new Lang.Class({
             this.hideFunction();
         }
 
+    },
+
+    _onMessageTrayHiding: function() {
+        // Wait until message tray finished hiding, then update dock visibility
+        Mainloop.timeout_add(Main.messageTray.ANIMATION_TIME, Lang.bind(this, function() {
+            this._updateDockVisibility();
+        }));
     },
 
     _overviewExit: function() {
