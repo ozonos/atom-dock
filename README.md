@@ -30,9 +30,9 @@ This project is licensed with GPL version 3 and later. See LICENSE for more deta
 
 * 0.3.2 Changes:
  * Fixed Swarm Animation to respect new Dock position
-   removed gnomedash.js since it was just a wrapper class for 2 lines of code,
+ * Removed gnomedash.js since it was just a wrapper class for 2 lines of code,
    which are now in extension.js
- * minor code cleanups
+ * Minor code cleanups
 * 0.3.1 Changes:
  * Fixed invisible box which prevent clicking even when dock is hidden
  * Show Applications label is now on top of dock
