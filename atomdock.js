@@ -367,7 +367,6 @@ const AtomDock = new Lang.Class({
         }
         this._myDwell = Main.messageTray._trayDwellTimeout;
         Main.messageTray._trayDwellTimeout = function() { return false; };
-        global.log("test");
     },
 
     _enableMessageTrayPressure: function() {
@@ -376,10 +375,9 @@ const AtomDock = new Lang.Class({
                 Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.OVERVIEW;
         }
         if(this._myDwell) {
-            Main.messageTray._trayDwellTimeout = _myDwell;
+            Main.messageTray._trayDwellTimeout = this._myDwell;
             this._myDwell = 0;
         }
-        global.log("test2");
     },
 
     _show: function() {
