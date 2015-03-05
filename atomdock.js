@@ -96,12 +96,6 @@ const AtomDock = new Lang.Class({
                 Main.overview,
                 'hiding',
                 Lang.bind(this, this._setOpaque)
-            ],
-            [
-               /* What if the Message Tray is removed in 3.16 ? Then this might blow up */
-               Main.messageTray,
-                'showing',
-                Lang.bind(this, this._hoverChanged)
             ]
         );
 
