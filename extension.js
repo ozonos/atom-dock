@@ -6,15 +6,13 @@
  * Extension's version: 0.3.2
  *
  * Changelog was moved to README.md
- * 
+ *
  * TODO(s):
- *  - bug on each initialization, dock stuck not hiding until hovered out
  *  - add animation of adding-removing app icon on redisplay and only shows that
  *    animation when dock is not hidden
- *  - app label only shows when animation not running (see #18)
  *  - check behavior on multiple monitor
  *  - add settings schema
- *  - implement workspace button    
+ *  - implement workspace button
  */
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -84,21 +82,19 @@ function hide() {
     atomDock.enableAutoHide();
 }
 
-function init() {
-       
-}
+function init() { }
 
 function enable() {
-    /* Make sure we don't see the old Dash anymore */    
-    Main.overview._dash.actor.get_parent().hide();    
-    oldDash = Main.overview._dash; 
+    /* Make sure we don't see the old Dash anymore */
+    Main.overview._dash.actor.get_parent().hide();
+    oldDash = Main.overview._dash;
 
     /* Enable new dock */
     atomDock = new AtomDock.AtomDock();
     intellihide = new Intellihide.Intellihide(show, hide, atomDock);
 
-    /* Make Shell respect our custom Dock as the 'real deal' :) */    
-    Main.overview._dash = atomDock.dash;    
+    /* Make Shell respect our custom Dock as the 'real deal' :) */
+    Main.overview._dash = atomDock.dash;
 
     injections['_redisplay'] = undefined;
 
@@ -175,18 +171,18 @@ function enable() {
 function disable() {
     intellihide.destroy();
     atomDock.destroy();
-    
-    /*Make sure the original Dock is usable after disabling Atom Dock*/        
-    Main.overview._dash = oldDash;    
+
+    /* Make sure the original Dock is usable after disabling Atom Dock */
+    Main.overview._dash = oldDash;
     Main.overview._dash.actor.get_parent().show();
 
     for (i in injections) {
         removeInjection(AppDisplay.AppIconMenu.prototype, injections, i);
     }
 
-    /*Cleanup*/    
+    /* Cleanup */
     injections = {};
-    atomDock= null;
-    intellihide=null;
-    oldDash=null;    
+    atomDock = null;
+    intellihide = null;
+    oldDash = null;
 }
