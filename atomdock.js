@@ -94,10 +94,14 @@ const AtomDock = new Lang.Class({
                 Lang.bind(this, this._setOpaque)
             ],
             [
-               /* What if the Message Tray is removed in 3.16 ? Then this might blow up */
                Main.messageTray,
                 'showing',
-                Lang.bind(this, this._hide)       
+                Lang.bind(this, this._forceHide)       
+            ],
+            [
+               Main.messageTray,
+                'hiding',
+                Lang.bind(this, this._delayedSyncHover)       
             ]
         );
 
@@ -334,11 +338,7 @@ const AtomDock = new Lang.Class({
          * is not restored until the mouse move again (sync_hover has no effect).
          */
         if (Main.wm._workspaceSwitcherPopup) {
-            Mainloop.timeout_add(500, Lang.bind(this, function() {
-                this._box.sync_hover();
-                this._hoverChanged();
-                return false;
-            }));
+            this._delayedSyncHover();
         } else if (this._autohideStatus) {
             if (this._box.hover) {
                 this._show();
@@ -402,6 +402,21 @@ const AtomDock = new Lang.Class({
             this._animateOut(ANIMATION_TIME, delay);
 
         }
+    },
+    
+    _forceHide: function(){
+        if(this.autohideStatus === false){
+            this.autohideStatus = true;        
+        }
+        this._hide();
+    },
+    
+    _delayedSyncHover: function(){
+        Mainloop.timeout_add(500, Lang.bind(this, function() {
+            this._box.sync_hover();
+            this._hoverChanged();
+            return false;
+        }));
     },
 
     _removeAnimations: function() {
