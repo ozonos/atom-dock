@@ -405,8 +405,8 @@ const AtomDock = new Lang.Class({
     },
     
     _forceHide: function(){
-        if(this.autohideStatus === false){
-            this.autohideStatus = true;        
+        if(this._autohideStatus === false){
+            this.enableAutoHide();        
         }
         this._hide();
     },
