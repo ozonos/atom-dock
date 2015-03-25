@@ -50,6 +50,9 @@ const AtomDock = new Lang.Class({
         this.dash.showAppsButton.connect('notify::checked',
                 Lang.bind(this, this._onShowAppsButtonToggled));
 
+        this.dash.showWindowsButton.connect('notify::checked',
+                Lang.bind(this, this._onShowWindowsButtonToggled));
+
         this.actor = new St.Bin({
             name: 'atomDockContainer',
             reactive: false,
@@ -298,6 +301,36 @@ const AtomDock = new Lang.Class({
         }
     },
 
+    _onShowWindowsButtonToggled: function() {
+
+            if (this.dash.showWindowsButton.checked) {
+
+                if (!Main.overview._shown) {
+                    // force entering overview if needed
+                    Main.overview.show();
+                    this.forcedOverview = true;
+                }
+
+           } else {
+
+                if (Main.overview._shown) {
+                    
+                    Main.overview.hide();
+                    this.forcedOverview = false;
+                }
+
+               
+            }
+        
+
+        /* Whenever the button is unactivated even if not by the user
+         * still reset the forcedOverview flag.
+         */
+        if (this.dash.showWindowsButton.checked === false) {
+            this.forcedOverview = false;
+        }
+    },
+
     // Keep ShowAppsButton status in sync with the overview status
     _syncShowAppsButtonToggled: function() {
         let status = Main.overview.viewSelector._showAppsButton.checked;
@@ -324,11 +357,13 @@ const AtomDock = new Lang.Class({
 
     _setOpaque: function() {
         this.dash._container.add_style_pseudo_class('desktop');
+        this.dash.showWindowsButton.checked = false;
     },
 
     _setTransparent: function() {
         this.dash._container.remove_style_pseudo_class('desktop');
         this.disableAutoHide();
+        this.dash.showWindowsButton.checked = true;
     },
 
     _hoverChanged: function() {

@@ -11,10 +11,12 @@ const Shell = imports.gi.Shell;
 const St = imports.gi.St;
 
 const AppFavorites = imports.ui.appFavorites;
+const AppDisplay = imports.ui.appDisplay;
 const Dash = imports.ui.dash;
 const DND = imports.ui.dnd;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
+const IconGrid = imports.ui.iconGrid;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
@@ -62,6 +64,14 @@ var showLabelFunction = function() {
     });
 };
 
+function getAppFromSource(source) {
+    if (source instanceof AppDisplay.AppIcon) {
+        return source.app;
+    } else {
+        return null;
+    }
+}
+
 const AtomDashItemContainer = new Lang.Class({
     Name: 'AtomDashItemContainer',
     Extends: Dash.DashItemContainer,
@@ -86,6 +96,86 @@ const AtomShowAppsIcon = new Lang.Class({
 
     showLabel: showLabelFunction
 });
+
+const AtomShowWindowsIcon = new Lang.Class({
+    Name: 'AtomShowWindowsIcon',
+    Extends: Dash.DashItemContainer,
+
+    _init: function() {
+        this.parent();
+
+        this.toggleButton = new St.Button({ style_class: 'show-apps',
+                                            track_hover: true,
+                                            can_focus: true,
+                                            toggle_mode: true });
+        this._iconActor = null;
+        this.icon = new IconGrid.BaseIcon(_("Show Windows"),
+                                           { setSizeManually: true,
+                                             showLabel: false,
+                                             createIcon: Lang.bind(this, this._createIcon) });
+        this.toggleButton.add_actor(this.icon.actor);
+        this.toggleButton._delegate = this;
+
+        this.setChild(this.toggleButton);
+        this.setDragApp(null);
+    },
+
+    _createIcon: function(size) {
+        this._iconActor = new St.Icon({ icon_name: 'view-window-spread-symbolic',
+                                        icon_size: size,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });
+        return this._iconActor;
+    },
+
+    _canOpenApp: function(app) {
+        if (app == null)
+            return false;
+
+        let id = app.get_id();
+        //let isFavorite = AppFavorites.getAppFavorites().isFavorite(id);
+        //return isFavorite;
+        return true;    
+},
+
+    setDragApp: function(app) {
+        let canOpen = this._canOpenApp(app);
+
+        this.toggleButton.set_hover(canOpen);
+        if (this._iconActor)
+            this._iconActor.set_hover(canOpen);
+
+        if (canOpen)
+            this.setLabelText(_("Open Application"));
+        else
+            this.setLabelText(_("Show Windows"));
+    },
+
+    handleDragOver: function(source, actor, x, y, time) {
+        if (!this._canOpenApp(getAppFromSource(source)))
+            return DND.DragMotionResult.NO_DROP;
+
+        return DND.DragMotionResult.MOVE_DROP;
+    },
+
+    acceptDrop: function(source, actor, x, y, time) {
+        let app = getAppFromSource(source);
+        if (!this._canOpenApp(app))
+            return false;
+
+        let id = app.get_id();
+
+        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
+            function () {
+                app.activate();
+                return false;
+            }));
+
+        return true;
+    },
+    showLabel: showLabelFunction
+});
+
 
 /* This class is a fork of the upstream DashActor class (ui.dash.js).
  * Heavily inspired from Michele's Dash to Dock extension
@@ -112,22 +202,37 @@ const AtomDashActor = new Lang.Class({
 
         let contentBox = this.get_theme_node().get_content_box(box);
         let availWidth = contentBox.x2 - contentBox.x1;
+        let availHeight = contentBox.y1 - contentBox.y2;
 
         this.set_allocation(box, flags);
 
         let t;
-        let [appIcons, showAppsButton] = this.get_children();
+        let [showWindowsButton, appIcons, showAppsButton] = this.get_children();
         let [t, showAppsNatWidth] = showAppsButton.get_preferred_width(availWidth);
+        let [t, showWindowsNatWidth] = showWindowsButton.get_preferred_width(availWidth);
+        let [t, showWindowsNatHeight] = showWindowsButton.get_preferred_height(availHeight);
 
         let childBox = new Clutter.ActorBox();
-
+        
+        //allocate the Windows Icon
         childBox.x1 = contentBox.x1;
+        childBox.y1 = contentBox.y1;        
+        childBox.x2 = contentBox.x1 + showAppsNatWidth;
+        childBox.y2 = contentBox.y2;
+
+        showWindowsButton.allocate(childBox, flags);        
+        
+        global.log('The allocated size:' +  showAppsNatWidth + ':' + showWindowsNatWidth);
+
+        //Allocate the AppIcons
+        childBox.x1 = contentBox.x1 + showAppsNatWidth;
         childBox.y1 = contentBox.y1;
         childBox.x2 = contentBox.x2 - showAppsNatWidth;
         childBox.y2 = contentBox.y2;
 
         appIcons.allocate(childBox, flags);
 
+        //allocate the App Button
         childBox.x1 = contentBox.x2 - showAppsNatWidth;
         childBox.x2 = contentBox.x2;
 
@@ -184,18 +289,28 @@ const AtomDash = new Lang.Class({
         });
 
         this._box._delegate = this;
-        this._container.add_actor(this._box);
+        //this._container.add_actor(this._box);
 
         this._showAppsIcon = new AtomShowAppsIcon();
         this._showAppsIcon.childScale = 1;
         this._showAppsIcon.childOpacity = 255;
         this._showAppsIcon.icon.setIconSize(this.iconSize);
 
+        this._showWindowsIcon = new AtomShowWindowsIcon();
+        this._showWindowsIcon.childScale = 1;
+        this._showWindowsIcon.childOpacity = 255;
+        this._showWindowsIcon.icon.setIconSize(this.iconSize);
+
         this._hookUpLabel(this._showAppsIcon);
-
+        this._hookUpLabel(this._showWindowsIcon);
+        
         this.showAppsButton = this._showAppsIcon.toggleButton;
+        this.showWindowsButton = this._showWindowsIcon.toggleButton;
 
+        this._container.add_actor(this._showWindowsIcon);  
+        this._container.add_actor(this._box);
         this._container.add_actor(this._showAppsIcon);
+ 
 
         this.actor = new St.Bin({ child: this._container });
         this.actor.connect('notify::width',
@@ -310,6 +425,7 @@ const AtomDash = new Lang.Class({
         this._clearDragPlaceholder();
         this._clearEmptyDropTarget();
         this._showAppsIcon.setDragApp(null);
+        this._showWindowsIcon.setDragApp(null);
         DND.removeDragMonitor(this._dragMonitor);
     },
 
@@ -321,8 +437,9 @@ const AtomDash = new Lang.Class({
         }
 
         let showAppsHovered = this._showAppsIcon.contains(dragEvent.targetActor);
+        let showWindowsHovered = this._showWindowsIcon.contains(dragEvent.targetActor);
 
-        if (!this._box.contains(dragEvent.targetActor) || showAppsHovered) {
+        if (!this._box.contains(dragEvent.targetActor) || showAppsHovered || showWindowsHovered) {
             this._clearDragPlaceholder();
         }
 
@@ -330,6 +447,12 @@ const AtomDash = new Lang.Class({
             this._showAppsIcon.setDragApp(app);
         } else {
             this._showAppsIcon.setDragApp(null);
+        }
+
+        if (showWindowsHovered) {
+            this._showWindowsIcon.setDragApp(app);
+        } else {
+            this._showWindowsIcon.setDragApp(null);
         }
 
         return DND.DragMotionResult.CONTINUE;
@@ -475,6 +598,7 @@ const AtomDash = new Lang.Class({
         });
 
         iconChildren.push(this._showAppsIcon);
+        iconChildren.push(this._showWindowsIcon);
 
         if (this._maxWidth === -1) {
             return;
