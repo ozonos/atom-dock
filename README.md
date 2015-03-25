@@ -12,7 +12,7 @@ A custom Dock Extension for Gnome Shell. This Extension is part of the Atom Exte
 | 3.10 | ??? |
 | 3.12 | yes |
 | 3.14 | yes |
-| 3.16 | ??? |
+| 3.16 | yes |
 
 ### Installation
 
