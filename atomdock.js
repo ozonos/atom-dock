@@ -46,7 +46,7 @@ const AtomDock = new Lang.Class({
         this.staticBox = new Clutter.ActorBox();
 
         // Create dash
-        this.dash = new AtomDash.AtomDash();
+        this.dash = new AtomDash.AtomDash(settings);
         this.dash.showAppsButton.connect('notify::checked',
                 Lang.bind(this, this._onShowAppsButtonToggled));
 
