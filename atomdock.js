@@ -16,10 +16,6 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const AtomDash = Me.imports.atomdash;
 
-// This will be on settings scheme
-const ANIMATION_TIME = 0.3;
-const SHOW_DELAY = 0.25;
-const HIDE_DELAY = 0.25;
 
 /* This class handles the dock and intellihide behavior.
  * Heavily inspired from Michele's Dash to Dock extension
@@ -28,7 +24,11 @@ const HIDE_DELAY = 0.25;
 const AtomDock = new Lang.Class({
     Name: 'AtomDock',
 
-    _init: function() {
+    _init: function(settings) {
+
+        // Load settings
+        this._settings = settings;
+        this._bindSettingsChanges();
 
         // initialize animation status object
         this._animStatus = new AnimationStatus(true);
@@ -257,6 +257,10 @@ const AtomDock = new Lang.Class({
         Main.overview.viewSelector.actor.set_style(null);
     },
 
+    _bindSettingsChanges: function() {
+        // TODO
+    },
+
     _onShowAppsButtonToggled: function() {
         /* Sync the status of the default appButtons. Only if the two statuses
          * are different, that means the user interacted with the extension
@@ -307,7 +311,7 @@ const AtomDock = new Lang.Class({
     // Show the dock and give focus to it
     _onAccessibilityFocus: function() {
         this._box.navigate_focus(null, Gtk.DirectionType.TAB_FORWARD, false);
-        this._animateIn(ANIMATION_TIME, 0);
+        this._animateIn(this._settings.get_double('animation-time'), 0);
     },
 
     destroy: function() {
@@ -357,7 +361,7 @@ const AtomDock = new Lang.Class({
              * before showing it otherwise show it immediately.
              */
             if (anim.hidden()) {
-                delay = SHOW_DELAY;
+                delay = this._settings.get_double('show-delay');
             } else if (anim.hiding()) {
                 /* suppress all potential queued hiding animations
                  * (always give priority to show)
@@ -367,7 +371,7 @@ const AtomDock = new Lang.Class({
             }
 
             this.emit('showing');
-            this._animateIn(ANIMATION_TIME, delay);
+            this._animateIn(this._settings.get_double('animation-time'), delay);
         }
     },
 
@@ -389,17 +393,19 @@ const AtomDock = new Lang.Class({
                      * increase the delay to avoid the overlap and interference
                      * between the animations
                      */
-                    delay = HIDE_DELAY + 1.2 * ANIMATION_TIME + SHOW_DELAY;
+                    delay = this._settings.get_double('hide-delay')
+                            + 1.2 * this._settings.get_double('animation-time')
+                            + this._settings.get_double('show-delay');
                 } else {
                     this._removeAnimations();
                     delay = 0;
                 }
             } else if (anim.shown()) {
-                delay = HIDE_DELAY;
+                delay = this._settings.get_double('hide-delay');
             }
 
             this.emit('hiding');
-            this._animateOut(ANIMATION_TIME, delay);
+            this._animateOut(this._settings.get_double('animation-time'), delay);
 
         }
     },
@@ -474,7 +480,7 @@ const AtomDock = new Lang.Class({
         if (this._autohideStatus === true) {
             this._autohideStatus = false;
             this._removeAnimations();
-            this._animateIn(ANIMATION_TIME, 0);
+            this._animateIn(this._settings.get_double('animation-time'), 0);
         }
     },
 
@@ -493,8 +499,8 @@ const AtomDock = new Lang.Class({
             }
 
             if (!this._box.hover) {
-                this._animateOut(ANIMATION_TIME, 0);
-                delay = ANIMATION_TIME;
+                this._animateOut(this._settings.get_double('animation-time'), 0);
+                delay = this._settings.get_double('animation-time');
             } else {
                 delay = 0;
             }
