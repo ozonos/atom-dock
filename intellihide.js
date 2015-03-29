@@ -1,10 +1,11 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
+/*jshint esnext: true */
+/*jshint indent: 4 */
 
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
-
 const Main = imports.ui.main;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -51,8 +52,9 @@ const Intellihide = new Lang.Class({
         // Target object
         this._target = target;
 
-        // Main id of the timeout controlling timeout for updateDockVisibility function
-        // when windows are dragged around (move and resize)
+        /* Main id of the timeout controlling timeout for updateDockVisibility
+         * function when windows are dragged around (move and resize).
+         */
         this._windowChangedTimeout = 0;
 
         // Connect global signals
@@ -63,15 +65,19 @@ const Intellihide = new Lang.Class({
                 'box-changed',
                 Lang.bind(this, this._updateDockVisibility)
             ],
-            // Subscribe to dash redisplay-workspace-switched event which emitted
-            // after dash finish redisplay specifically on workspace-switched event.
+            /* Subscribe to dash redisplay-workspace-switched event which
+             * emitted after dash finish redisplay specifically on
+             * workspace-switched event.
+             */
             [
                 this._target.dash,
                 'redisplay-workspace-switched',
                 Lang.bind(this, this._switchWorkspace)
             ],
-            // Add timeout when window grab-operation begins and remove it when it ends.
-            // These signals only exist starting from Gnome-Shell 3.4
+            /* Add timeout when window grab-operation begins and
+             * remove it when it ends. These signals only exist starting from
+             * Gnome-Shell 3.4
+             */
             [
                 global.display,
                 'grab-op-begin',
@@ -82,7 +88,7 @@ const Intellihide = new Lang.Class({
                 'grab-op-end',
                 Lang.bind(this, this._grabOpEnd)
             ],
-            // direct maximize/unmazimize are not included in grab-operations
+            // Direct maximize/unmazimize are not included in grab-operations
             [
                 global.window_manager,
                 'maximize',
@@ -93,7 +99,9 @@ const Intellihide = new Lang.Class({
                 'unmaximize',
                 Lang.bind(this, this._updateDockVisibility)
             ],
-            // trigggered for instance when a window is changed (also during switch-workspace).
+            /* Trigggered for instance when a window is changed
+             * (also during switch-workspace).
+             */
             [
                 global.screen,
                 'restacked',
@@ -110,7 +118,9 @@ const Intellihide = new Lang.Class({
                 'hiding',
                 Lang.bind(this, this._overviewExit)
             ],
-            // update wne monitor changes, for instance in multimonitor when monitor are attached
+            /* update wne monitor changes, for instance in multimonitor
+             * when monitor are attached
+             */
             [
                 global.screen,
                 'monitors-changed',
@@ -130,31 +140,35 @@ const Intellihide = new Lang.Class({
         this._signalHandler.disconnect();
 
         if (this._windowChangedTimeout > 0) {
-            Mainloop.source_remove(this._windowChangedTimeout); // Just to be sure
+            Mainloop.source_remove(this._windowChangedTimeout);
         }
+
         this._windowChangedTimeout = 0;
     },
 
     _show: function(force) {
+
         if (this.status !== true || force) {
             this.status = true;
             this.showFunction();
         }
+
     },
 
     _hide: function(force) {
+
         if (this.status !== false || force) {
             this.status = false;
             this.hideFunction();
         }
+
     },
 
-    _overviewExit : function() {
+    _overviewExit: function() {
         // Inside the overview the dash could have been hidden
         this.status = undefined;
         this._disableIntellihide = false;
         this._updateDockVisibility();
-
     },
 
     _overviewEnter: function() {
@@ -162,7 +176,8 @@ const Intellihide = new Lang.Class({
     },
 
     _grabOpBegin: function() {
-        let INTERVAL = 100; // A good compromise between reactivity and efficiency; to be tuned.
+        // A good compromise between reactivity and efficiency; to be tuned.
+        let INTERVAL = 100;
 
         if (this._windowChangedTimeout > 0) {
             Mainloop.source_remove(this._windowChangedTimeout); // Just to be sure
@@ -171,12 +186,14 @@ const Intellihide = new Lang.Class({
         this._windowChangedTimeout = Mainloop.timeout_add(INTERVAL,
             Lang.bind(this, function() {
                 this._updateDockVisibility();
-                return true; // to make the loop continue
+                // to make the loop continue
+                return true;
             })
         );
     },
 
     _grabOpEnd: function() {
+
         if (this._windowChangedTimeout > 0) {
             Mainloop.source_remove(this._windowChangedTimeout);
         }
@@ -190,25 +207,26 @@ const Intellihide = new Lang.Class({
     },
 
     _windowRestacked: function() {
-
-        // Skip update dock on workspace switch, because we need that to be handled by
-        // _switchWorkspace
+        /* Skip update dock on workspace switch, because we need that
+         * to be handled by _switchWorkspace.
+         */
         if (Main.wm._workspaceSwitcherPopup === null) {
             this._updateDockVisibility();
         }
     },
 
     _updateDockVisibility: function() {
+
         if (!this._disableIntellihide) {
             let overlaps = false;
             let windows = global.get_window_actors();
 
             if (windows.length > 0) {
-
                 // This is the window on top of all others in the current workspace
                 let topWindow = windows[windows.length - 1].get_meta_window();
                 // If there isn't a focused app, use that of the window on top
-                this._focusApp = this._tracker.focus_app || this._tracker.get_window_app(topWindow);
+                this._focusApp = this._tracker.focus_app ||
+                    this._tracker.get_window_app(topWindow);
 
                 windows = windows.filter(this._intellihideFilterInteresting, this);
 
@@ -216,12 +234,12 @@ const Intellihide = new Lang.Class({
 
                     let win = windows[i].get_meta_window();
                     if (win) {
-                        let rect = win.get_outer_rect();
+                        let rect = win.get_frame_rect();
 
                         let test = (rect.x < this._target.staticBox.x2) &&
-                                (rect.x +rect.width > this._target.staticBox.x1) &&
-                                (rect.y < this._target.staticBox.y2) &&
-                                (rect.y +rect.height > this._target.staticBox.y1);
+                            (rect.x +rect.width > this._target.staticBox.x1) &&
+                            (rect.y < this._target.staticBox.y2) &&
+                            (rect.y +rect.height > this._target.staticBox.y1);
 
                         if (test) {
                             overlaps = true;
@@ -239,13 +257,14 @@ const Intellihide = new Lang.Class({
         }
     },
 
-    // Filter interesting windows to be considered for intellihide.
-    // Consider all windows visible on the current workspace.
-    // Optionally skip windows of other applications
-    _intellihideFilterInteresting: function(wa){
-        var currentWorkspace = global.screen.get_active_workspace_index();
+    /* Filter interesting windows to be considered for intellihide.
+     * Consider all windows visible on the current workspace.
+     * Optionally skip windows of other applications
+     */
+    _intellihideFilterInteresting: function(wa) {
+        let currentWorkspace = global.screen.get_active_workspace_index();
 
-        var meta_win = wa.get_meta_window();
+        let meta_win = wa.get_meta_window();
         if (!meta_win) {
             return false;
         }
@@ -254,27 +273,32 @@ const Intellihide = new Lang.Class({
             return false;
         }
 
-        var wksp = meta_win.get_workspace();
-        var wksp_index = wksp.index();
+        let wksp = meta_win.get_workspace();
+        let wksp_index = wksp.index();
 
         // Skip windows of other apps
         if (this._focusApp) {
-            // The DropDownTerminal extension is not an application per se
-            // so we match its window by wm class instead
-            if (meta_win.get_wm_class() == 'DropDownTerminalWindow') {
+            /* The DropDownTerminal extension is not an application per sec
+             * so we match its window by wm class instead
+             */
+            if (meta_win.get_wm_class() === 'DropDownTerminalWindow') {
                 return true;
             }
 
             let currentApp = this._tracker.get_window_app(meta_win);
 
-            // But consider half maximized windows
-            // Useful if one is using two apps side by side
-            if (this._focusApp != currentApp && !(meta_win.maximized_vertically && !meta_win.maximized_horizontally)) {
+            /* But consider half maximized windows
+             * Useful if one is using two apps side by side
+             */
+            if (this._focusApp !== currentApp &&
+                    !(meta_win.maximized_vertically &&
+                        !meta_win.maximized_horizontally)) {
                 return false;
             }
         }
 
-        if (wksp_index == currentWorkspace && meta_win.showing_on_its_workspace()) {
+        if (wksp_index === currentWorkspace &&
+                meta_win.showing_on_its_workspace()) {
             return true;
         } else {
             return false;
@@ -282,26 +306,33 @@ const Intellihide = new Lang.Class({
 
     },
 
-    // Filter windows by type
-    // inspired by Opacify@gnome-shell.localdomain.pl
+    /* Filter windows by type
+     * inspired by Opacify@gnome-shell.localdomain.pl
+     */
     _handledWindow: function(metaWindow) {
 
-        // The DropDownTerminal extension uses the POPUP_MENU window type hint
-        // so we match its window by wm class instead
-        if (metaWindow.get_wm_class() == 'DropDownTerminalWindow') {
+        /* The DropDownTerminal extension uses the POPUP_MENU window type hint
+         * so we match its window by wm class instead
+         */
+        if (metaWindow.get_wm_class() === 'DropDownTerminalWindow') {
+
             return true;
         }
 
-        var wtype = metaWindow.get_window_type();
-        for (var i = 0; i < handledWindowTypes.length; i++) {
-            var hwtype = handledWindowTypes[i];
-            if (hwtype == wtype) {
+        let wtype = metaWindow.get_window_type();
+
+        for (let i = 0; i < handledWindowTypes.length; i++) {
+            let hwtype = handledWindowTypes[i];
+
+            if (hwtype === wtype) {
+
                 return true;
             } else if (hwtype > wtype) {
+
                 return false;
             }
         }
+
         return false;
     }
-
 });
