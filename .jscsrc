@@ -13,7 +13,7 @@
     "requireParenthesesAroundIIFE": true,
     "requireMultipleVarDecl": true,
     "requireCommaBeforeLineBreak": true,
-    "requireCamelCaseOrUpperCaseIdentifiers": true,
+    "requireCamelCaseOrUpperCaseIdentifiers": false,
     "requireDotNotation": "except_snake_case",
     "requireSpacesInForStatement": true,
     "requireSpaceBetweenArguments": true,
