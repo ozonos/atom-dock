@@ -161,7 +161,9 @@ const AtomDashActor = new Lang.Class({
 const AtomDash = new Lang.Class({
     Name: 'AtomDash',
 
-    _init: function() {
+    _init: function(settings) {
+        this._settings = settings;
+        this._bindSettingsChanges();
         this._signalHandler = new Convenience.GlobalSignalHandler();
         this._monitorWidth = this._getMonitorWidth();
 
@@ -268,6 +270,20 @@ const AtomDash = new Lang.Class({
         );
     },
 
+    _bindSettingsChanges: function() {
+        this._settings.connect('changed::per-workspace-app',Lang.bind(this, function(){
+            // Set per workspace setting in all app icons in the dock
+            let children = this._box.get_children().filter(function(actor) {
+                return actor.child &&
+                       actor.child._delegate;
+            });
+            for (let i = 0; i < children.length; i++) {
+                children[i].child._delegate.setPerWorkspace(this._settings.get_boolean('per-workspace-app'));
+            }
+            this._queueRedisplay();
+        }));
+    },
+
     _getMonitorWidth: function() {
         // 75% of monitor width as icon size adjustment threshold
         return Math.floor(Main.layoutManager.primaryMonitor.width * 0.75);
@@ -370,7 +386,7 @@ const AtomDash = new Lang.Class({
         let appIcon = new AtomAppDisplay.AtomAppIcon(app, {
             setSizeManually: true,
             showLabel: false
-        });
+        }, this._settings.get_boolean('per-workspace-app'));
 
         appIcon._draggable.connect('drag-begin',
             Lang.bind(this, function() {
@@ -584,7 +600,8 @@ const AtomDash = new Lang.Class({
         for (let i = 0; i < running.length; i++) {
             let app = running[i];
             if (app.get_id() in favorites ||
-                !app.is_on_workspace(global.screen.get_active_workspace())) {
+                (this._settings.get_boolean('per-workspace-app') &&
+                !app.is_on_workspace(global.screen.get_active_workspace()))) {
 
                 continue;
             }

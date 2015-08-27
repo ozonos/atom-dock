@@ -38,17 +38,24 @@ const AtomAppIcon = new Lang.Class({
     Name: 'AtomAppIcon',
     Extends: AppDisplay.AppIcon,
 
-    _init : function(app, iconParams) {
+    _init : function(app, iconParams, perWorkspace) {
         this.parent(app, iconParams);
+        this._perWorkspace = perWorkspace;
         this._windowsChangedId = this.app.connect('windows-changed',
             Lang.bind(this, this._onStateChanged));
+    },
+
+    setPerWorkspace: function(perWorkspace) {
+        // This only called when per workspace setting is changed
+        this._perWorkspace = perWorkspace;
+        this._onStateChanged();
     },
 
     _onActivate: function (event) {
         this.emit('launching');
         let modifiers = event.get_state();
 
-        if (!this._isAppOnActiveWorkspace() ||
+        if ((this._perWorkspace && !this._isAppOnActiveWorkspace()) ||
             (modifiers & Clutter.ModifierType.CONTROL_MASK &&
                     this.app.state === Shell.AppState.RUNNING)) {
 
@@ -62,7 +69,7 @@ const AtomAppIcon = new Lang.Class({
 
     _onStateChanged: function() {
         if (this.app.state !== Shell.AppState.STOPPED &&
-            this._isAppOnActiveWorkspace()) {
+            (!this._perWorkspace || this._isAppOnActiveWorkspace())) {
 
             this.actor.add_style_class_name('running');
         } else {

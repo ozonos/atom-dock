@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-shell-extensions">
+  <schema path="/org/gnome/shell/extensions/atom-dock/" id="org.gnome.shell.extensions.atom-dock">
+    <key type="d" name="animation-time">
+      <default>0.30</default>
+      <summary>Animation time</summary>
+      <description>Sets the time duration of the autohide effect.</description>
+    </key>
+    <key type="d" name="show-delay">
+      <default>0.25</default>
+      <summary>Show delay</summary>
+      <description>Sets the delay after the mouse reaches the screen border before showing the dock.</description>
+    </key>
+    <key type="d" name="hide-delay">
+      <default>0.25</default>
+      <summary>Show delay</summary>
+      <description>Sets the delay after the mouse left the dock before hiding it.</description>
+    </key>
+    <key type="b" name="per-workspace-app">
+      <default>true</default>
+      <summary>Per workspace app</summary>
+      <description>Show icons for running application only in each respective workspace.</description>
+    </key>
+  </schema>
+</schemalist>
