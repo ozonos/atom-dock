@@ -1,8 +1,13 @@
-Atom dock
-=========
-A custom Dock Extension for Gnome Shell. This Extension is part of the Atom Extension Set designed for Ozon OS. 
+# Atom Dock
 
-![initial version screenshot](https://cloud.githubusercontent.com/assets/749098/2646924/941f1bc0-bf44-11e3-8368-73526fee9056.png)
+![atom-dock](https://cloud.githubusercontent.com/assets/5920259/9534407/2179d398-4d10-11e5-956b-f808b55c3753.png)
+
+Atom Dock is a well-integrated app launcher providing convenient access to your favorite and running Applications.  
+
+### Features 
+* Show the Dash on the bottom
+* Show Launchers based on current Workspace
+* Intellihide Behaviour
 
 
 ### Compatibility
