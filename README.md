@@ -18,6 +18,7 @@ Atom Dock is a well-integrated app launcher providing convenient access to your 
 | 3.12 | yes |
 | 3.14 | yes |
 | 3.16 | yes |
+| 3.18 | yes |
 
 ### Installation
 
